@@ -28,3 +28,22 @@ File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php o
 Stack trace: 
 #0 {main}
 
+[2025-03-23 23:07:44] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:10:16] Uncaught Exception: Call to a member function prepare() on null
+File: D:\diploms-2025\wine_sales_automation\config\database.php on line 52
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(157): Database->select('SELECT ci.*, p....', Array)
+#1 D:\diploms-2025\wine_sales_automation\api\cart_count.php(18): CustomerController->getCart('fa3d4b565f0ee91...')
+#2 {main}
+
+[2025-03-23 23:57:34] Uncaught Exception: Call to a member function prepare() on null
+File: D:\diploms-2025\wine_sales_automation\config\database.php on line 52
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(157): Database->select('SELECT ci.*, p....', Array)
+#1 D:\diploms-2025\wine_sales_automation\api\cart_count.php(18): CustomerController->getCart('fa3d4b565f0ee91...')
+#2 {main}
+

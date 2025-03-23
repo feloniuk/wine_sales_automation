@@ -414,6 +414,161 @@ class WarehouseController {
         }
     }
 
+
+// Метод для получения статистики по складу для дашборда
+public function getDashboardData() {
+    // Статистика по товарам
+    $productsStatsQuery = "SELECT 
+                COUNT(*) as total_products,
+                SUM(CASE WHEN category_id = 1 THEN 1 ELSE 0 END) as red_wine_count,
+                SUM(CASE WHEN category_id = 2 THEN 1 ELSE 0 END) as white_wine_count,
+                SUM(CASE WHEN category_id IN (3, 4, 5) THEN 1 ELSE 0 END) as other_wine_count,
+                SUM(CASE WHEN stock_quantity <= min_stock THEN 1 ELSE 0 END) as low_stock_count,
+                SUM(stock_quantity) as total_stock_items,
+                SUM(stock_quantity * price) as total_stock_value
+             FROM products";
+    
+    $productsStats = $this->db->selectOne($productsStatsQuery) ?: [
+        'total_products' => 0,
+        'red_wine_count' => 0,
+        'white_wine_count' => 0,
+        'other_wine_count' => 0,
+        'low_stock_count' => 0,
+        'total_stock_items' => 0,
+        'total_stock_value' => 0
+    ];
+    
+    // Получение заказов, которые ожидают обработки
+    $pendingOrdersQuery = "SELECT o.*, u.name as customer_name 
+                        FROM orders o
+                        JOIN users u ON o.customer_id = u.id
+                        WHERE o.status IN ('pending', 'processing')
+                        ORDER BY o.created_at ASC";
+    
+    $pendingOrders = $this->db->select($pendingOrdersQuery);
+    
+    // Получение товаров с низким запасом
+    $lowStockProductsQuery = "SELECT p.*, pc.name as category_name 
+                            FROM products p
+                            JOIN product_categories pc ON p.category_id = pc.id
+                            WHERE p.stock_quantity <= p.min_stock
+                            ORDER BY ((p.min_stock - p.stock_quantity) / p.min_stock) DESC";
+    
+    $lowStockProducts = $this->db->select($lowStockProductsQuery);
+    
+    // Получение статистики по транзакциям за неделю
+    $weekAgo = date('Y-m-d', strtotime('-7 days'));
+    $today = date('Y-m-d');
+    
+    $transactionStatsQuery = "SELECT 
+                            DATE(it.created_at) as date,
+                            SUM(CASE WHEN it.transaction_type = 'in' THEN it.quantity ELSE 0 END) as in_quantity,
+                            SUM(CASE WHEN it.transaction_type = 'out' THEN it.quantity ELSE 0 END) as out_quantity,
+                            COUNT(CASE WHEN it.transaction_type = 'in' THEN 1 ELSE NULL END) as in_count,
+                            COUNT(CASE WHEN it.transaction_type = 'out' THEN 1 ELSE NULL END) as out_count
+                        FROM inventory_transactions it
+                        WHERE it.created_at BETWEEN ? AND ?
+                        GROUP BY DATE(it.created_at)
+                        ORDER BY DATE(it.created_at)";
+    
+    $transactionStats = $this->db->select($transactionStatsQuery, [$weekAgo, $today]);
+    
+    // Получение топ-продуктов по количеству отправлений
+    $topProductsQuery = "SELECT p.id, p.name, p.image, pc.name as category_name,
+                        SUM(CASE WHEN it.transaction_type = 'out' THEN it.quantity ELSE 0 END) as total_out,
+                        COUNT(DISTINCT CASE WHEN it.reference_type = 'order' THEN it.reference_id ELSE NULL END) as order_count
+                     FROM products p
+                     JOIN product_categories pc ON p.category_id = pc.id
+                     JOIN inventory_transactions it ON p.id = it.product_id
+                     WHERE it.transaction_type = 'out'
+                     GROUP BY p.id, p.name, p.image, pc.name
+                     ORDER BY total_out DESC
+                     LIMIT 5";
+    
+    $topProducts = $this->db->select($topProductsQuery);
+    
+    return [
+        'products_stats' => $productsStats,
+        'pending_orders' => $pendingOrders,
+        'low_stock_products' => $lowStockProducts,
+        'transaction_stats' => $transactionStats,
+        'top_products' => $topProducts
+    ];
+}
+
+// Метод для обработки заказа
+public function processOrder($orderId) {
+    // Проверяем существование заказа
+    $orderQuery = "SELECT * FROM orders WHERE id = ?";
+    $order = $this->db->selectOne($orderQuery, [$orderId]);
+    
+    if (!$order) {
+        return [
+            'success' => false,
+            'message' => 'Заказ не найден'
+        ];
+    }
+    
+    // Проверяем статус заказа
+    if ($order['status'] !== 'processing') {
+        return [
+            'success' => false,
+            'message' => 'Неверный статус заказа для обработки'
+        ];
+    }
+    
+    // Изменяем статус на "готов к отправке"
+    $updateResult = $this->updateOrderStatus($orderId, 'ready_for_pickup', 'Заказ подготовлен к отправке');
+    
+    if (!$updateResult['success']) {
+        return $updateResult;
+    }
+    
+    return [
+        'success' => true,
+        'message' => 'Заказ успешно обработан и готов к отправке'
+    ];
+}
+
+// Метод для просмотра всех транзакций инвентаря
+public function getAllTransactions($page = 1, $perPage = 20) {
+    $query = "SELECT it.*, 
+             p.name as product_name, 
+             u.name as user_name
+             FROM inventory_transactions it
+             LEFT JOIN products p ON it.product_id = p.id
+             LEFT JOIN users u ON it.created_by = u.id
+             ORDER BY it.created_at DESC";
+    
+    return $this->db->paginate($query, [], $page, $perPage);
+}
+
+// Метод для фильтрации транзакций по типу или товару
+public function filterTransactions($type = null, $productId = null, $page = 1, $perPage = 20) {
+    $query = "SELECT it.*, 
+             p.name as product_name, 
+             u.name as user_name
+             FROM inventory_transactions it
+             LEFT JOIN products p ON it.product_id = p.id
+             LEFT JOIN users u ON it.created_by = u.id
+             WHERE 1=1";
+    
+    $params = [];
+    
+    if ($type) {
+        $query .= " AND it.transaction_type = ?";
+        $params[] = $type;
+    }
+    
+    if ($productId) {
+        $query .= " AND it.product_id = ?";
+        $params[] = $productId;
+    }
+    
+    $query .= " ORDER BY it.created_at DESC";
+    
+    return $this->db->paginate($query, $params, $page, $perPage);
+}
     // Проведення інвентаризації
     public function performInventory($inventoryData) {
         // Розпочинаємо транзакцію

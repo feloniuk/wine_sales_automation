@@ -340,44 +340,6 @@ class CustomerController {
             ];
         }
         
-        // Останні замовлення клієнта
-        $ordersQuery = "SELECT o.*, 
-                       (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as items_count
-                       FROM orders o
-                       WHERE o.customer_id = ?
-                       ORDER BY o.created_at DESC
-                       LIMIT 5";
-        
-        $recentOrders = $this->db->select($ordersQuery, [$customerId]);
-        
-        // Рекомендовані товари
-        $recommendedProducts = $this->getRecommendedProducts($customerId, 4);
-        
-        // Непрочитані повідомлення
-        $messagesQuery = "SELECT m.*, u.name as sender_name, u.role as sender_role
-                         FROM messages m
-                         JOIN users u ON m.sender_id = u.id
-                         WHERE m.receiver_id = ? AND m.is_read = 0
-                         ORDER BY m.created_at DESC";
-        
-        $unreadMessages = $this->db->select($messagesQuery, [$customerId]);
-        
-        return [
-            'success' => true,
-            'customer' => $customer,
-            'recent_orders' => $recentOrders,
-            'recommended_products' => $recommendedProducts,
-            'unread_messages' => $unreadMessages
-        ];
-    }
-}
-        if (!$customer) {
-            return [
-                'success' => false,
-                'message' => 'Клієнт не знайдений'
-            ];
-        }
-        
         // Створюємо замовлення
         $this->db->beginTransaction();
         
@@ -617,9 +579,108 @@ class CustomerController {
                          (SELECT MAX(created_at) FROM orders WHERE customer_id = u.id) as last_order_date
                          FROM users u
                          WHERE u.id = ?";
-                         $customer = $this->db->select($customerQuery, [$customerId]);
-                         return $customer;
-                        }
-                    }
-                    
-                         
+        
+        $customer = $this->db->selectOne($customerQuery, [$customerId]);
+        
+        if (!$customer) {
+            return [
+                'success' => false,
+                'message' => 'Клієнт не знайдений'
+            ];
+        }
+        
+        // Останні замовлення клієнта
+        $ordersQuery = "SELECT o.*, 
+                       (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as items_count
+                       FROM orders o
+                       WHERE o.customer_id = ?
+                       ORDER BY o.created_at DESC
+                       LIMIT 5";
+        
+        $recentOrders = $this->db->select($ordersQuery, [$customerId]);
+        
+        // Рекомендовані товари
+        $recommendedProducts = $this->getRecommendedProducts($customerId, 4);
+        
+        // Непрочитані повідомлення
+        $messagesQuery = "SELECT m.*, u.name as sender_name, u.role as sender_role
+                         FROM messages m
+                         JOIN users u ON m.sender_id = u.id
+                         WHERE m.receiver_id = ? AND m.is_read = 0
+                         ORDER BY m.created_at DESC";
+        
+        $unreadMessages = $this->db->select($messagesQuery, [$customerId]);
+        
+        return [
+            'success' => true,
+            'customer' => $customer,
+            'recent_orders' => $recentOrders,
+            'recommended_products' => $recommendedProducts,
+            'unread_messages' => $unreadMessages
+        ];
+    }
+    
+    // Генерація ID сесії для кошика
+    public function generateCartSessionId() {
+        $sessionId = bin2hex(random_bytes(16));
+        setcookie('cart_session_id', $sessionId, time() + 86400 * 30, '/'); // 30 днів
+        return $sessionId;
+    }
+    
+    // Отримання активних промокодів
+    public function getActivePromotions() {
+        $query = "SELECT * FROM promotions 
+                 WHERE status = 'active' 
+                 AND (NOW() BETWEEN start_date AND end_date)
+                 ORDER BY min_order_amount DESC";
+        
+        return $this->db->select($query);
+    }
+    
+    // Застосування знижки за промокодом
+    public function applyDiscount($subtotal, $promoCode) {
+        // Перевіряємо наявність та валідність промокоду
+        $query = "SELECT * FROM promotions 
+                 WHERE code = ? 
+                 AND status = 'active' 
+                 AND (NOW() BETWEEN start_date AND end_date)";
+        
+        $promotion = $this->db->selectOne($query, [$promoCode]);
+        
+        if (!$promotion) {
+            return [
+                'success' => false,
+                'message' => 'Промокод не знайдено або він неактивний'
+            ];
+        }
+        
+        // Перевіряємо мінімальну суму замовлення
+        if ($promotion['min_order_amount'] && $subtotal < $promotion['min_order_amount']) {
+            return [
+                'success' => false,
+                'message' => 'Цей промокод діє лише для замовлень від ' . number_format($promotion['min_order_amount'], 2) . ' ₴'
+            ];
+        }
+        
+        // Розраховуємо знижку
+        $discount = 0;
+        if ($promotion['discount_percent']) {
+            $discount = $subtotal * ($promotion['discount_percent'] / 100);
+        } elseif ($promotion['discount_amount']) {
+            $discount = $promotion['discount_amount'];
+            if ($discount > $subtotal) {
+                $discount = $subtotal; // Знижка не може перевищувати суму замовлення
+            }
+        }
+        
+        // Розраховуємо нову суму
+        $newTotal = $subtotal - $discount;
+        
+        return [
+            'success' => true,
+            'message' => 'Промокод успішно застосований',
+            'discount' => $discount,
+            'new_total' => $newTotal
+        ];
+    }
+}

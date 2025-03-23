@@ -339,6 +339,135 @@ class SalesController {
         ];
     }
 
+
+// Метод для поиска заказов по тексту (номеру или клиенту)
+public function searchOrders($searchText, $page = 1, $perPage = ITEMS_PER_PAGE) {
+    $query = "SELECT o.*, 
+             u.name as customer_name, u.email as customer_email, u.phone as customer_phone,
+             COUNT(oi.id) as items_count, 
+             SUM(oi.quantity) as total_items
+             FROM orders o
+             LEFT JOIN users u ON o.customer_id = u.id
+             LEFT JOIN order_items oi ON o.id = oi.order_id
+             WHERE (o.id LIKE ? OR u.name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?)
+             GROUP BY o.id, o.customer_id, o.sales_manager_id, o.total_amount,
+                     o.status, o.payment_status, o.payment_method, o.shipping_address,
+                     o.shipping_cost, o.notes, o.created_at, o.updated_at,
+                     u.name, u.email, u.phone
+             ORDER BY o.created_at DESC";
+    
+    $searchParam = "%$searchText%";
+    return $this->db->paginate($query, [$searchParam, $searchParam, $searchParam, $searchParam], $page, $perPage);
+}
+
+// Метод для получения статистики для дашборда менеджера
+public function getDashboardData($managerId) {
+    // Количество заказов менеджера по статусам
+    $ordersQuery = "SELECT 
+                  COUNT(*) as total_orders,
+                  SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                  SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing_count,
+                  SUM(CASE WHEN status = 'ready_for_pickup' THEN 1 ELSE 0 END) as ready_count,
+                  SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped_count,
+                  SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered_count,
+                  SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
+                  SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count,
+                  SUM(total_amount) as total_sales
+               FROM orders
+               WHERE sales_manager_id = ?";
+    
+    $ordersStats = $this->db->selectOne($ordersQuery, [$managerId]) ?: [
+        'total_orders' => 0,
+        'pending_count' => 0,
+        'processing_count' => 0,
+        'ready_count' => 0,
+        'shipped_count' => 0,
+        'delivered_count' => 0,
+        'completed_count' => 0,
+        'cancelled_count' => 0,
+        'total_sales' => 0
+    ];
+    
+    // Заказы, требующие действия менеджера
+    $pendingOrdersQuery = "SELECT o.*, 
+                         u.name as customer_name, u.phone as customer_phone,
+                         COUNT(oi.id) as items_count
+                         FROM orders o
+                         LEFT JOIN users u ON o.customer_id = u.id
+                         LEFT JOIN order_items oi ON o.id = oi.order_id
+                         WHERE o.sales_manager_id = ? AND (o.status = 'pending' OR o.status = 'processing')
+                         GROUP BY o.id, o.customer_id, o.sales_manager_id, o.total_amount,
+                                 o.status, o.payment_status, o.payment_method, o.shipping_address,
+                                 o.shipping_cost, o.notes, o.created_at, o.updated_at,
+                                 u.name, u.phone
+                         ORDER BY o.created_at ASC
+                         LIMIT 10";
+    
+    $pendingOrders = $this->db->select($pendingOrdersQuery, [$managerId]);
+    
+    // Непрочитанные сообщения
+    $messagesQuery = "SELECT m.*, u.name as sender_name, u.role as sender_role
+                     FROM messages m
+                     JOIN users u ON m.sender_id = u.id
+                     WHERE m.receiver_id = ? AND m.is_read = 0
+                     ORDER BY m.created_at DESC";
+    
+    $unreadMessages = $this->db->select($messagesQuery, [$managerId]);
+    
+    // Статистика продаж за последний месяц (по дням)
+    $monthAgo = date('Y-m-d', strtotime('-30 days'));
+    
+    $salesStatsQuery = "SELECT 
+                       DATE(created_at) as date,
+                       COUNT(*) as order_count,
+                       SUM(total_amount) as total_sales
+                    FROM orders
+                    WHERE sales_manager_id = ? AND created_at >= ?
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at)";
+    
+    $salesByDay = $this->db->select($salesStatsQuery, [$managerId, $monthAgo]);
+    
+    // Топ клиентов менеджера
+    $topCustomersQuery = "SELECT u.id, u.name, u.email, u.phone,
+                        COUNT(o.id) as order_count,
+                        SUM(o.total_amount) as total_spent,
+                        MAX(o.created_at) as last_order_date
+                     FROM users u
+                     JOIN orders o ON u.id = o.customer_id
+                     WHERE o.sales_manager_id = ?
+                     GROUP BY u.id, u.name, u.email, u.phone
+                     ORDER BY total_spent DESC
+                     LIMIT 5";
+    
+    $topCustomers = $this->db->select($topCustomersQuery, [$managerId]);
+    
+    // Топ товаров, проданных менеджером
+    $topProductsQuery = "SELECT p.id, p.name, p.image, pc.name as category_name,
+                       SUM(oi.quantity) as total_quantity,
+                       COUNT(DISTINCT o.id) as order_count,
+                       SUM(oi.quantity * oi.price) as total_sales
+                    FROM products p
+                    JOIN product_categories pc ON p.category_id = pc.id
+                    JOIN order_items oi ON p.id = oi.product_id
+                    JOIN orders o ON oi.order_id = o.id
+                    WHERE o.sales_manager_id = ?
+                    GROUP BY p.id, p.name, p.image, pc.name
+                    ORDER BY total_sales DESC
+                    LIMIT 5";
+    
+    $topProducts = $this->db->select($topProductsQuery, [$managerId]);
+    
+    return [
+        'orders_stats' => $ordersStats,
+        'pending_orders' => $pendingOrders,
+        'unread_messages' => $unreadMessages,
+        'sales_by_day' => $salesByDay,
+        'top_customers' => $topCustomers,
+        'top_products' => $topProducts
+    ];
+}
+
     // Отримання клієнтів для менеджера
     public function getCustomers($page = 1, $perPage = ITEMS_PER_PAGE) {
         $query = "SELECT u.*, 
@@ -550,103 +679,5 @@ class SalesController {
                 'message' => 'Помилка при створенні замовлення: ' . $e->getMessage()
             ];
         }
-    }
-
-    // Отримання статистики для дашборда менеджера з продажу
-    public function getDashboardData($managerId) {
-        // Кількість замовлень менеджера за статусами
-        $ordersQuery = "SELECT 
-                        COUNT(*) as total_orders,
-                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
-                        SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing_count,
-                        SUM(CASE WHEN status = 'ready_for_pickup' THEN 1 ELSE 0 END) as ready_count,
-                        SUM(CASE WHEN status = 'shipped' THEN 1 ELSE 0 END) as shipped_count,
-                        SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered_count,
-                        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count,
-                        SUM(CASE WHEN status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_count,
-                        SUM(total_amount) as total_sales
-                     FROM orders
-                     WHERE sales_manager_id = ?";
-        
-        $ordersStats = $this->db->selectOne($ordersQuery, [$managerId]);
-        
-        // Замовлення, які потребують дії менеджера
-        $pendingOrdersQuery = "SELECT o.*, 
-                             u.name as customer_name, u.phone as customer_phone,
-                             COUNT(oi.id) as items_count
-                             FROM orders o
-                             LEFT JOIN users u ON o.customer_id = u.id
-                             LEFT JOIN order_items oi ON o.id = oi.order_id
-                             WHERE o.sales_manager_id = ? AND (o.status = 'pending' OR o.status = 'processing')
-                             GROUP BY o.id, o.customer_id, o.sales_manager_id, o.total_amount,
-                                     o.status, o.payment_status, o.payment_method, o.shipping_address,
-                                     o.shipping_cost, o.notes, o.created_at, o.updated_at,
-                                     u.name, u.phone
-                             ORDER BY o.created_at ASC
-                             LIMIT 10";
-        
-        $pendingOrders = $this->db->select($pendingOrdersQuery, [$managerId]);
-        
-        // Непрочитані повідомлення
-        $messagesQuery = "SELECT m.*, u.name as sender_name, u.role as sender_role
-                         FROM messages m
-                         JOIN users u ON m.sender_id = u.id
-                         WHERE m.receiver_id = ? AND m.is_read = 0
-                         ORDER BY m.created_at DESC";
-        
-        $unreadMessages = $this->db->select($messagesQuery, [$managerId]);
-        
-        // Статистика продажів за останній місяць (по днях)
-        $monthAgo = date('Y-m-d', strtotime('-30 days'));
-        
-        $salesStatsQuery = "SELECT 
-                           DATE(created_at) as date,
-                           COUNT(*) as order_count,
-                           SUM(total_amount) as total_sales
-                        FROM orders
-                        WHERE sales_manager_id = ? AND created_at >= ?
-                        GROUP BY DATE(created_at)
-                        ORDER BY DATE(created_at)";
-        
-        $salesByDay = $this->db->select($salesStatsQuery, [$managerId, $monthAgo]);
-        
-        // Топ клієнтів менеджера
-        $topCustomersQuery = "SELECT u.id, u.name, u.email, u.phone,
-                            COUNT(o.id) as order_count,
-                            SUM(o.total_amount) as total_spent,
-                            MAX(o.created_at) as last_order_date
-                         FROM users u
-                         JOIN orders o ON u.id = o.customer_id
-                         WHERE o.sales_manager_id = ?
-                         GROUP BY u.id, u.name, u.email, u.phone
-                         ORDER BY total_spent DESC
-                         LIMIT 5";
-        
-        $topCustomers = $this->db->select($topCustomersQuery, [$managerId]);
-        
-        // Топ товарів, проданих менеджером
-        $topProductsQuery = "SELECT p.id, p.name, p.image, pc.name as category_name,
-                           SUM(oi.quantity) as total_quantity,
-                           COUNT(DISTINCT o.id) as order_count,
-                           SUM(oi.quantity * oi.price) as total_sales
-                        FROM products p
-                        JOIN product_categories pc ON p.category_id = pc.id
-                        JOIN order_items oi ON p.id = oi.product_id
-                        JOIN orders o ON oi.order_id = o.id
-                        WHERE o.sales_manager_id = ?
-                        GROUP BY p.id, p.name, p.image, pc.name
-                        ORDER BY total_sales DESC
-                        LIMIT 5";
-        
-        $topProducts = $this->db->select($topProductsQuery, [$managerId]);
-        
-        return [
-            'orders_stats' => $ordersStats,
-            'pending_orders' => $pendingOrders,
-            'unread_messages' => $unreadMessages,
-            'sales_by_day' => $salesByDay,
-            'top_customers' => $topCustomers,
-            'top_products' => $topProducts
-        ];
     }
 }
