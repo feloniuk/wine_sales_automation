@@ -1,0 +1,30 @@
+[2025-03-23 23:03:17] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:03:24] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:03:24] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:03:25] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:03:26] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
+[2025-03-23 23:03:44] Uncaught Exception: syntax error, unexpected '}', expecting end of file
+File: D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php on line 456
+Stack trace: 
+#0 {main}
+
