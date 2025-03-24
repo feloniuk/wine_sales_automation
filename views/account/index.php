@@ -46,7 +46,7 @@ $dashboardData = $customerController->getCustomerDashboard($currentUser['id']);
                 </a>
                 <div class="relative">
                     <button class="flex items-center text-white focus:outline-none">
-                        <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                        <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                         <span><?= htmlspecialchars($currentUser['name']) ?></span>
                         <i class="fas fa-chevron-down ml-2"></i>
                     </button>
@@ -243,7 +243,7 @@ $dashboardData = $customerController->getCustomerDashboard($currentUser['id']);
                             <?php foreach ($dashboardData['recommended_products'] as $product): ?>
                             <div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow">
                                 <a href="../product.php?id=<?= $product['id'] ?>">
-                                    <img src="../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-48 object-cover">
+                                    <img src="../../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-48 object-cover">
                                 </a>
                                 <div class="p-4">
                                     <a href="../product.php?id=<?= $product['id'] ?>" class="block mb-1">

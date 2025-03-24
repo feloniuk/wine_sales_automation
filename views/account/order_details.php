@@ -1,6 +1,6 @@
 <?php
-// account/orders.php
-// Сторінка історії замовлень клієнта
+// account/order_details.php
+// Сторінка детальної інформації про замовлення клієнта
 
 // Підключаємо конфігурацію
 define('ROOT_PATH', dirname(dirname(__DIR__)));
@@ -11,18 +11,34 @@ require_once ROOT_PATH . '/controllers/CustomerController.php';
 // Перевіряємо авторизацію
 $authController = new AuthController();
 if (!$authController->isLoggedIn() || !$authController->checkRole('customer')) {
-    header('Location: /login.php?redirect=account/orders');
+    header('Location: /login.php?redirect=account/order_details');
     exit;
 }
 
 // Отримуємо дані поточного користувача
 $currentUser = $authController->getCurrentUser();
 
+// Перевіряємо наявність ID замовлення
+$orderId = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($orderId <= 0) {
+    header('Location: orders.php');
+    exit;
+}
+
 // Ініціалізуємо контролер для роботи з замовленнями
 $customerController = new CustomerController();
 
-// Отримуємо замовлення клієнта
-$orders = $customerController->getCustomerOrders($currentUser['id']);
+// Отримуємо деталі замовлення
+$orderDetails = $customerController->getCustomerOrderDetails($orderId, $currentUser['id']);
+
+// Перевіряємо успішність отримання замовлення
+if (!$orderDetails['success']) {
+    header('Location: orders.php');
+    exit;
+}
+
+$order = $orderDetails['order'];
+$items = $orderDetails['items'];
 
 // Функція для виведення статусу замовлення
 function renderOrderStatus($status) {
@@ -50,7 +66,7 @@ function renderOrderStatus($status) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мої замовлення - Винна крамниця</title>
+    <title>Замовлення #<?= $orderId ?> - Винна крамниця</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -62,9 +78,9 @@ function renderOrderStatus($status) {
                 <a href="../index.php" class="font-bold text-2xl">Винна крамниця</a>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="../../index.php" class="hover:text-red-200">Каталог</a>
+                <a href="../index.php" class="hover:text-red-200">Каталог</a>
                 <a href="index.php" class="bg-red-700 px-3 py-1 rounded-lg hover:bg-red-600">Кабінет</a>
-                <a href="../../cart.php" class="relative">
+                <a href="../cart.php" class="relative">
                     <i class="fas fa-shopping-cart text-xl"></i>
                     <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cart-count">0</span>
                 </a>
@@ -112,58 +128,91 @@ function renderOrderStatus($status) {
 
             <!-- Основний контент -->
             <div class="flex-1">
-                <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b">
-                        <h1 class="text-2xl font-semibold">Мої замовлення</h1>
-                    </div>
-                    
-                    <?php if (empty($orders)): ?>
-                        <div class="p-6 text-center text-gray-500">
-                            <i class="fas fa-shopping-bag text-4xl mb-4 text-gray-300"></i>
-                            <p>У вас ще немає жодного замовлення</p>
-                            <a href="../index.php" class="mt-4 inline-block bg-red-800 text-white px-4 py-2 rounded hover:bg-red-700">
-                                Почати покупки
-                            </a>
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h1 class="text-2xl font-semibold">Замовлення #<?= $orderId ?></h1>
+                        <div>
+                            <?= renderOrderStatus($order['status']) ?>
                         </div>
-                    <?php else: ?>
+                    </div>
+                    <div class="text-gray-600 mb-4">
+                        Створено: <?= date('d.m.Y H:i', strtotime($order['created_at'])) ?>
+                    </div>
+
+                    <!-- Інформація про доставку -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <h3 class="font-semibold mb-2">Адреса доставки</h3>
+                            <p><?= htmlspecialchars($order['shipping_address']) ?></p>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-2">Менеджер замовлення</h3>
+                            <p><?= !empty($order['manager_name']) ? htmlspecialchars($order['manager_name']) : 'Не призначено' ?></p>
+                        </div>
+                    </div>
+
+                    <!-- Список товарів -->
+                    <div class="mb-6">
+                        <h3 class="font-semibold mb-2">Товари в замовленні</h3>
                         <div class="overflow-x-auto">
                             <table class="min-w-full">
                                 <thead>
                                     <tr class="bg-gray-50">
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Номер</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
+                                        <th class="px-4 py-2 text-left">Товар</th>
+                                        <th class="px-4 py-2 text-left">Ціна</th>
+                                        <th class="px-4 py-2 text-left">Кількість</th>
+                                        <th class="px-4 py-2 text-left">Сума</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <?php foreach ($orders as $order): ?>
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            #<?= $order['id'] ?>
+                                <tbody>
+                                    <?php foreach ($items as $item): ?>
+                                    <tr class="border-b">
+                                        <td class="px-4 py-2">
+                                            <div class="flex items-center">
+                                                <img src="../../assets/images/<?= $item['image'] ?? 'default.jpg' ?>" 
+                                                     alt="<?= htmlspecialchars($item['product_name']) ?>" 
+                                                     class="w-16 h-16 object-cover mr-4">
+                                                <span><?= htmlspecialchars($item['product_name']) ?></span>
+                                            </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?= date('d.m.Y', strtotime($order['created_at'])) ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <?= number_format($order['total_amount'], 2) ?> ₴
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <?= renderOrderStatus($order['status']) ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <a href="order_details.php?id=<?= $order['id'] ?>" 
-                                               class="text-red-800 hover:underline">
-                                                Деталі
-                                            </a>
-                                        </td>
+                                        <td class="px-4 py-2"><?= number_format($item['price'], 2) ?> ₴</td>
+                                        <td class="px-4 py-2"><?= $item['quantity'] ?> шт.</td>
+                                        <td class="px-4 py-2"><?= number_format($item['price'] * $item['quantity'], 2) ?> ₴</td>
                                     </tr>
                                     <?php endforeach; ?>
                                 </tbody>
+                                <tfoot>
+                                    <tr class="bg-gray-50">
+                                        <td colspan="3" class="px-4 py-2 text-right font-semibold">Підсумок:</td>
+                                        <td class="px-4 py-2"><?= number_format($order['total_amount'] - $order['shipping_cost'], 2) ?> ₴</td>
+                                    </tr>
+                                    <tr class="bg-gray-50">
+                                        <td colspan="3" class="px-4 py-2 text-right font-semibold">Доставка:</td>
+                                        <td class="px-4 py-2"><?= number_format($order['shipping_cost'], 2) ?> ₴</td>
+                                    </tr>
+                                    <tr class="bg-gray-50 font-bold">
+                                        <td colspan="3" class="px-4 py-2 text-right">Всього:</td>
+                                        <td class="px-4 py-2 text-red-800"><?= number_format($order['total_amount'], 2) ?> ₴</td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
+                    </div>
+
+                    <!-- Додаткова інформація -->
+                    <?php if (!empty($order['notes'])): ?>
+                    <div class="bg-gray-50 p-4 rounded">
+                        <h3 class="font-semibold mb-2">Додаткові примітки</h3>
+                        <p><?= htmlspecialchars($order['notes']) ?></p>
+                    </div>
                     <?php endif; ?>
+
+                    <!-- Кнопка повернення -->
+                    <div class="mt-6">
+                        <a href="orders.php" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded">
+                            Повернутися до списку замовлень
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

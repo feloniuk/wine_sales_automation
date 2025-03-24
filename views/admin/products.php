@@ -214,7 +214,7 @@ if (isset($_GET['success'])) {
                     <div class="flex items-center">
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
-                                <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                                <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                                 <span><?= $currentUser['name'] ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
@@ -341,7 +341,7 @@ if (isset($_GET['success'])) {
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="h-10 w-10 rounded overflow-hidden">
-                                            <img src="../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="h-full w-full object-cover">
+                                            <img src="../../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="h-full w-full object-cover">
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">

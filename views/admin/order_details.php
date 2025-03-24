@@ -135,7 +135,7 @@ function getPaymentStatusClass($status) {
                     <div class="flex items-center">
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
-                                <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                                <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                                 <span><?= $currentUser['name'] ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
@@ -211,7 +211,7 @@ function getPaymentStatusClass($status) {
                                     <?php foreach ($orderDetails['items'] as $item): ?>
                                     <tr class="border-b">
                                         <td class="p-2 flex items-center">
-                                            <img src="../assets/images/<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="h-10 w-10 mr-2 rounded">
+                                            <img src="../../assets/images/<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['product_name']) ?>" class="h-10 w-10 mr-2 rounded">
                                             <?= htmlspecialchars($item['product_name']) ?>
                                         </td>
                                         <td class="p-2"><?= htmlspecialchars($item['category_name']) ?></td>

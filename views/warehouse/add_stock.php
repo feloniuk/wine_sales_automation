@@ -132,7 +132,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                     <div class="flex items-center">
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
-                                <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                                <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                                 <span><?= isset($currentUser['name']) ? htmlspecialchars($currentUser['name']) : '' ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
@@ -176,7 +176,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                 <div class="bg-white rounded-lg shadow p-6 mb-6">
                     <div class="flex flex-col md:flex-row items-start">
                         <div class="w-full md:w-1/4 mb-4 md:mb-0">
-                            <img src="../assets/images/<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-auto rounded-lg">
+                            <img src="../../assets/images/<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-auto rounded-lg">
                         </div>
                         <div class="w-full md:w-3/4 md:pl-6">
                             <h2 class="text-xl font-semibold mb-2"><?= htmlspecialchars($product['name']) ?></h2>

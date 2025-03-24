@@ -299,7 +299,7 @@ switch ($order['payment_method']) {
                     <div class="flex items-center">
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
-                                <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                                <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                                 <span><?= $currentUser['name'] ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
@@ -570,7 +570,7 @@ switch ($order['payment_method']) {
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="flex-shrink-0 h-10 w-10">
-                                                <img class="h-10 w-10 rounded-full object-cover" src="../assets/images/<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['product_name']) ?>">
+                                                <img class="h-10 w-10 rounded-full object-cover" src="../../assets/images/<?= $item['image'] ?>" alt="<?= htmlspecialchars($item['product_name']) ?>">
                                             </div>
                                             <div class="ml-4">
                                                 <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($item['product_name']) ?></div>

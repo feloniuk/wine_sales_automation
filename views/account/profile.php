@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </a>
                 <div class="relative">
                     <button class="flex items-center text-white focus:outline-none">
-                        <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                        <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                         <span><?= htmlspecialchars($currentUser['name']) ?></span>
                         <i class="fas fa-chevron-down ml-2"></i>
                     </button>

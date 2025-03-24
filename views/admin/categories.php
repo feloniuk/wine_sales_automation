@@ -236,7 +236,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                     <div class="flex items-center">
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
-                                <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
+                                <img src="../../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
                                 <span><?= $currentUser['name'] ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
@@ -301,7 +301,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                                     <label for="image" class="block text-sm font-medium text-gray-700 mb-1">Зображення</label>
                                     <?php if ($editCategory && !empty($editCategory['image'])): ?>
                                     <div class="mb-2">
-                                        <img src="../assets/images/<?= $editCategory['image'] ?>" alt="<?= htmlspecialchars($editCategory['name']) ?>" class="h-32 w-32 object-cover rounded">
+                                        <img src="../../assets/images/<?= $editCategory['image'] ?>" alt="<?= htmlspecialchars($editCategory['name']) ?>" class="h-32 w-32 object-cover rounded">
                                     </div>
                                     <?php endif; ?>
                                     <input type="file" id="image" name="image" accept="image/*"
@@ -353,7 +353,7 @@ if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $category['id'] ?></td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="h-10 w-10 rounded overflow-hidden">
-                                                    <img src="../assets/images/<?= $category['image'] ?>" alt="<?= htmlspecialchars($category['name']) ?>" class="h-full w-full object-cover">
+                                                    <img src="../../assets/images/<?= $category['image'] ?>" alt="<?= htmlspecialchars($category['name']) ?>" class="h-full w-full object-cover">
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
