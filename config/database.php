@@ -4,7 +4,7 @@
 
 // Підключаємо конфігураційний файл, якщо ще не підключений
 if (!defined('ROOT_PATH')) {
-    require_once dirname(__DIR__) . '/config.php';
+    define('ROOT_PATH', dirname(dirname(__DIR__)));
 }
 
 // Підключаємо клас логування
