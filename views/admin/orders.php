@@ -380,7 +380,11 @@ if (isset($_GET['success'])) {
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        <?= $order['sales_manager_id'] ? htmlspecialchars($order['sales_manager_name']) : 'Не призначено' ?>
+                                    <?php
+// Изменения в коде для устранения ошибки
+// Заменим строку в таблице замовлень
+echo htmlspecialchars($order['sales_manager_id'] ? $order['sales_manager_name'] ?? 'Не призначено' : 'Не призначено');
+?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
