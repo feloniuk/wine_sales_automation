@@ -39,10 +39,10 @@ $messageType = '';
 
 // Обробка форми
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_transaction'])) {
-    $quantity = intval($_POST['quantity']);
-    $transactionType = $_POST['transaction_type'];
-    $referenceType = $_POST['reference_type'];
-    $notes = $_POST['notes'];
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 0;
+    $transactionType = isset($_POST['transaction_type']) ? $_POST['transaction_type'] : '';
+    $referenceType = isset($_POST['reference_type']) ? $_POST['reference_type'] : '';
+    $notes = isset($_POST['notes']) ? $_POST['notes'] : '';
     
     if ($quantity <= 0) {
         $message = 'Кількість повинна бути більше нуля.';
@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_transaction'])
             // Оновлюємо дані товару
             $product = $warehouseController->getProductById($productId);
         } else {
-            $message = 'Помилка при оновленні кількості товару: ' . $result['message'];
+            $message = 'Помилка при оновленні кількості товару: ' . (isset($result['message']) ? $result['message'] : 'Невідома помилка');
             $messageType = 'error';
         }
     }
@@ -133,7 +133,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">
                                 <img src="../assets/images/avatar.jpg" alt="Avatar" class="h-8 w-8 rounded-full mr-2">
-                                <span><?= $currentUser['name'] ?></span>
+                                <span><?= isset($currentUser['name']) ? htmlspecialchars($currentUser['name']) : '' ?></span>
                                 <i class="fas fa-chevron-down ml-2"></i>
                             </button>
                         </div>
@@ -165,7 +165,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                 <i class="<?= $iconClass ?>"></i>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm"><?= $message ?></p>
+                                <p class="text-sm"><?= htmlspecialchars($message) ?></p>
                             </div>
                         </div>
                     </div>
@@ -176,7 +176,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                 <div class="bg-white rounded-lg shadow p-6 mb-6">
                     <div class="flex flex-col md:flex-row items-start">
                         <div class="w-full md:w-1/4 mb-4 md:mb-0">
-                            <img src="../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-auto rounded-lg">
+                            <img src="../assets/images/<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-auto rounded-lg">
                         </div>
                         <div class="w-full md:w-3/4 md:pl-6">
                             <h2 class="text-xl font-semibold mb-2"><?= htmlspecialchars($product['name']) ?></h2>
@@ -188,7 +188,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                     <div class="space-y-2">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">ID:</span>
-                                            <span class="font-medium"><?= $product['id'] ?></span>
+                                            <span class="font-medium"><?= (int)$product['id'] ?></span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Категорія:</span>
@@ -196,15 +196,15 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Рік:</span>
-                                            <span class="font-medium"><?= $product['year'] ?></span>
+                                            <span class="font-medium"><?= isset($product['year']) ? (int)$product['year'] : '-' ?></span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Алкоголь:</span>
-                                            <span class="font-medium"><?= $product['alcohol'] ?>%</span>
+                                            <span class="font-medium"><?= isset($product['alcohol']) ? floatval($product['alcohol']) : '-' ?>%</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Об'єм:</span>
-                                            <span class="font-medium"><?= $product['volume'] ?> мл</span>
+                                            <span class="font-medium"><?= isset($product['volume']) ? (int)$product['volume'] : '-' ?> мл</span>
                                         </div>
                                     </div>
                                 </div>
@@ -213,25 +213,25 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                     <div class="space-y-2">
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Ціна:</span>
-                                            <span class="font-medium"><?= number_format($product['price'], 2) ?> ₴</span>
+                                            <span class="font-medium"><?= number_format((float)$product['price'], 2) ?> ₴</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Поточна кількість:</span>
-                                            <span class="font-medium <?= $product['stock_quantity'] <= $product['min_stock'] ? 'text-red-600' : 'text-green-600' ?>">
-                                                <?= $product['stock_quantity'] ?> шт.
+                                            <span class="font-medium <?= (int)$product['stock_quantity'] <= (int)$product['min_stock'] ? 'text-red-600' : 'text-green-600' ?>">
+                                                <?= (int)$product['stock_quantity'] ?> шт.
                                             </span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Мінімальний запас:</span>
-                                            <span class="font-medium"><?= $product['min_stock'] ?> шт.</span>
+                                            <span class="font-medium"><?= (int)$product['min_stock'] ?> шт.</span>
                                         </div>
                                         <div class="flex justify-between">
                                             <span class="text-gray-600">Статус запасу:</span>
-                                            <?php if ($product['stock_quantity'] <= 0): ?>
+                                            <?php if ((int)$product['stock_quantity'] <= 0): ?>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                                 Відсутній на складі
                                             </span>
-                                            <?php elseif ($product['stock_quantity'] <= $product['min_stock']): ?>
+                                            <?php elseif ((int)$product['stock_quantity'] <= (int)$product['min_stock']): ?>
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                                 Низький запас
                                             </span>
@@ -252,7 +252,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-lg font-semibold mb-4">Операції з товаром</h2>
-                        <form action="add_stock.php?id=<?= $productId ?>" method="POST">
+                        <form action="add_stock.php?id=<?= (int)$productId ?>" method="POST">
                             <div class="mb-4">
                                 <label for="transaction_type" class="block text-sm font-medium text-gray-700 mb-1">Тип операції</label>
                                 <select id="transaction_type" name="transaction_type" required
@@ -289,7 +289,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
 
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-lg font-semibold mb-4">Рекомендації</h2>
-                        <?php if ($product['stock_quantity'] <= 0): ?>
+                        <?php if ((int)$product['stock_quantity'] <= 0): ?>
                         <div class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
                             <div class="flex">
                                 <div class="flex-shrink-0">
@@ -301,7 +301,7 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                 </div>
                             </div>
                         </div>
-                        <?php elseif ($product['stock_quantity'] <= $product['min_stock']): ?>
+                        <?php elseif ((int)$product['stock_quantity'] <= (int)$product['min_stock']): ?>
                         <div class="bg-yellow-100 text-yellow-700 p-4 rounded-lg mb-4">
                             <div class="flex">
                                 <div class="flex-shrink-0">
@@ -324,15 +324,139 @@ $transactions = $warehouseController->getProductTransactionHistory($productId);
                                     <h3 class="text-sm font-medium">Статистика продажів</h3>
                                     <p class="mt-2 text-sm">
                                         Рекомендована кількість для закупівлі: 
-                                        <span class="font-medium"><?= max(($product['min_stock'] * 2) - $product['stock_quantity'], 0) ?> шт.</span>
+                                        <span class="font-medium">
+                                            <?php 
+                                            $recommendedAmount = max(((int)$product['min_stock'] * 2) - (int)$product['stock_quantity'], 0);
+                                            echo $recommendedAmount;
+                                            ?> шт.
+                                        </span>
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Історія транзакцій товару -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="text-lg font-semibold">Історія транзакцій</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Причина</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Примітки</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Користувач</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <?php if (empty($transactions)): ?>
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                        Історія транзакцій для цього товару відсутня
+                                    </td>
+                                </tr>
+                                <?php else: ?>
+                                <?php foreach ($transactions as $transaction): ?>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?= date('d.m.Y H:i', strtotime($transaction['created_at'])) ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <?php if (isset($transaction['transaction_type']) && $transaction['transaction_type'] === 'in'): ?>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Надходження
+                                        </span>
+                                        <?php else: ?>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            Списання
+                                        </span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?= isset($transaction['quantity']) ? (int)$transaction['quantity'] : 0 ?> шт.
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?php
+                                        if (isset($transaction['reference_type'])) {
+                                            switch ($transaction['reference_type']) {
+                                                case 'production': echo 'Поставка від виробника'; break;
+                                                case 'adjustment': echo 'Коригування запасів'; break;
+                                                case 'return': echo 'Повернення'; break;
+                                                case 'order': 
+                                                    echo 'Замовлення #' . (isset($transaction['reference_id']) ? (int)$transaction['reference_id'] : ''); 
+                                                    break;
+                                                default: echo htmlspecialchars($transaction['reference_type']); break;
+                                            }
+                                        } else {
+                                            echo '-';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        <?= isset($transaction['notes']) ? nl2br(htmlspecialchars($transaction['notes'])) : '-' ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <?= isset($transaction['user_name']) ? htmlspecialchars($transaction['user_name']) : 'Система' ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <?php else: ?>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-circle text-red-500 text-5xl mb-4"></i>
+                        <h2 class="text-2xl font-semibold mb-2">Товар не знайдено</h2>
+                        <p class="text-gray-600 mb-4">Товар з вказаним ідентифікатором не існує або був видалений.</p>
+                        <a href="products.php" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded inline-block">
+                            <i class="fas fa-arrow-left mr-2"></i> Повернутися до списку товарів
+                        </a>
+                    </div>
+                </div>
+                <?php endif; ?>
             </main>
         </div>
     </div>
+
+    <script>
+        // Обмеження вводу кількості при списанні товару
+        document.addEventListener('DOMContentLoaded', function() {
+            const transactionTypeSelect = document.getElementById('transaction_type');
+            const quantityInput = document.getElementById('quantity');
+            
+            if (transactionTypeSelect && quantityInput) {
+                transactionTypeSelect.addEventListener('change', function() {
+                    if (this.value === 'out') {
+                        // Якщо обрано списання, обмежуємо максимальну кількість поточною кількістю на складі
+                        var maxQuantity = <?= $product ? (int)$product['stock_quantity'] : 0 ?>;
+                        quantityInput.setAttribute('max', maxQuantity);
+                        
+                        // Якщо поточне значення більше максимального, зменшуємо його
+                        if (parseInt(quantityInput.value) > maxQuantity) {
+                            quantityInput.value = maxQuantity;
+                        }
+                    } else {
+                        // Якщо обрано надходження, знімаємо обмеження
+                        quantityInput.removeAttribute('max');
+                    }
+                });
+                
+                // Ініціалізуємо при завантаженні сторінки
+                if (transactionTypeSelect.value === 'out') {
+                    var maxQuantity = <?= $product ? (int)$product['stock_quantity'] : 0 ?>;
+                    quantityInput.setAttribute('max', maxQuantity);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

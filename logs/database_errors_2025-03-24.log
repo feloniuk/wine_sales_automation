@@ -1,0 +1,32 @@
+[2025-03-24 00:16:10] [ERROR] SQL Error: SQLSTATE[HY000] [1049] Unknown database 'wine_sales_automation'
+Query: Connection attempt
+Params: []
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(31): PDO->__construct('mysql:host=loca...', 'root', '')
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(16): Database->getConnection()
+#2 D:\diploms-2025\wine_sales_automation\api\cart_count.php(14): CustomerController->__construct()
+#3 {main}
+[2025-03-24 00:16:11] [ERROR] SQL Error: SQLSTATE[HY000] [1049] Unknown database 'wine_sales_automation'
+Query: Connection attempt
+Params: []
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(31): PDO->__construct('mysql:host=loca...', 'root', '')
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(16): Database->getConnection()
+#2 D:\diploms-2025\wine_sales_automation\api\cart_count.php(14): CustomerController->__construct()
+#3 {main}
+[2025-03-24 00:39:09] [ERROR] SQL Error: SQLSTATE[HY000] [1049] Unknown database 'wine_sales_automation'
+Query: Connection attempt
+Params: []
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(31): PDO->__construct('mysql:host=loca...', 'root', '')
+#1 D:\diploms-2025\wine_sales_automation\controllers\AuthController.php(16): Database->getConnection()
+#2 D:\diploms-2025\wine_sales_automation\login.php(11): AuthController->__construct()
+#3 {main}
+[2025-03-24 00:39:09] [ERROR] SQL Error: SQLSTATE[HY000] [1049] Unknown database 'wine_sales_automation'
+Query: Connection attempt
+Params: []
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(31): PDO->__construct('mysql:host=loca...', 'root', '')
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(16): Database->getConnection()
+#2 D:\diploms-2025\wine_sales_automation\api\cart_count.php(14): CustomerController->__construct()
+#3 {main}

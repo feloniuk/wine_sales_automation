@@ -153,4 +153,214 @@ $dashboardData = $customerController->getCustomerDashboard($currentUser['id']);
                                 </div>
                                 <div>
                                     <p class="text-gray-500">Останнє замовлення</p>
-                                    <p class="text-xl font-semibold"><?= $dashboardData['customer']['last_order_date'] ? date('d.m.Y', strtotime($dashboardData['customer']['last_order_date'])) : 'Немає
+                                    <p class="text-xl font-semibold"><?= $dashboardData['customer']['last_order_date'] ? date('d.m.Y', strtotime($dashboardData['customer']['last_order_date'])) : 'Немає' ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Останні замовлення -->
+                <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-semibold">Останні замовлення</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">№</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <?php if (empty($dashboardData['recent_orders'])): ?>
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">У вас ще немає замовлень</td>
+                                </tr>
+                                <?php else: ?>
+                                <?php foreach ($dashboardData['recent_orders'] as $order): ?>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#<?= $order['id'] ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= date('d.m.Y', strtotime($order['created_at'])) ?></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?= number_format($order['total_amount'], 2) ?> ₴</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <?php
+                                        switch ($order['status']) {
+                                            case 'pending':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Нове</span>';
+                                                break;
+                                            case 'processing':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">В обробці</span>';
+                                                break;
+                                            case 'ready_for_pickup':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">Готове до відправки</span>';
+                                                break;
+                                            case 'shipped':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">Відправлено</span>';
+                                                break;
+                                            case 'delivered':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Доставлено</span>';
+                                                break;
+                                            case 'completed':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Завершено</span>';
+                                                break;
+                                            case 'cancelled':
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Скасовано</span>';
+                                                break;
+                                            default:
+                                                echo '<span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">' . $order['status'] . '</span>';
+                                        }
+                                        ?>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <a href="order_details.php?id=<?= $order['id'] ?>" class="text-red-800 hover:underline">Детальніше</a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-6 border-t">
+                        <a href="orders.php" class="text-red-800 hover:underline">Всі замовлення →</a>
+                    </div>
+                </div>
+
+                <!-- Рекомендовані товари -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="p-6 border-b">
+                        <h2 class="text-xl font-semibold">Рекомендовані товари</h2>
+                    </div>
+                    <div class="p-6">
+                        <?php if (empty($dashboardData['recommended_products'])): ?>
+                        <p class="text-gray-500 text-center">У нас поки немає рекомендацій для вас</p>
+                        <?php else: ?>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <?php foreach ($dashboardData['recommended_products'] as $product): ?>
+                            <div class="bg-white rounded-lg overflow-hidden shadow hover:shadow-md transition-shadow">
+                                <a href="../product.php?id=<?= $product['id'] ?>">
+                                    <img src="../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-48 object-cover">
+                                </a>
+                                <div class="p-4">
+                                    <a href="../product.php?id=<?= $product['id'] ?>" class="block mb-1">
+                                        <h3 class="text-lg font-semibold text-gray-800 hover:text-red-800 transition-colors"><?= htmlspecialchars($product['name']) ?></h3>
+                                    </a>
+                                    <p class="text-sm text-gray-600 mb-2"><?= htmlspecialchars($product['category_name']) ?></p>
+                                    <p class="text-red-800 font-bold mb-2"><?= number_format($product['price'], 2) ?> ₴</p>
+                                    <button class="add-to-cart-button w-full py-2 px-4 bg-red-800 hover:bg-red-700 text-white rounded-lg text-sm"
+                                            data-id="<?= $product['id'] ?>">
+                                        Додати в кошик
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Футер -->
+    <footer class="bg-gray-900 text-white py-8 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Винна крамниця</h3>
+                    <p class="text-gray-400">Ваш надійний партнер у світі вина з 2015 року.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Категорії</h3>
+                    <ul class="space-y-2">
+                        <li><a href="../index.php?category=1" class="text-gray-400 hover:text-white">Червоні вина</a></li>
+                        <li><a href="../index.php?category=2" class="text-gray-400 hover:text-white">Білі вина</a></li>
+                        <li><a href="../index.php?category=3" class="text-gray-400 hover:text-white">Рожеві вина</a></li>
+                        <li><a href="../index.php?category=4" class="text-gray-400 hover:text-white">Ігристі вина</a></li>
+                        <li><a href="../index.php?category=5" class="text-gray-400 hover:text-white">Десертні вина</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Інформація</h3>
+                    <ul class="space-y-2">
+                        <li><a href="../about.php" class="text-gray-400 hover:text-white">Про нас</a></li>
+                        <li><a href="../delivery.php" class="text-gray-400 hover:text-white">Доставка та оплата</a></li>
+                        <li><a href="../contact.php" class="text-gray-400 hover:text-white">Контакти</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">Контакти</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-2"></i>
+                            <span>вул. Виноградна, 1, Київ, 01001</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2"></i>
+                            <span>+380 (50) 123-45-67</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>info@winery.ua</span>
+                        </li>
+                    </ul>
+                    <div class="mt-4 flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>&copy; 2025 Винна крамниця. Всі права захищено.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Підрахунок кількості товарів у кошику
+        function updateCartCount() {
+            fetch('../api/cart_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.cart-count').textContent = data.count;
+                })
+                .catch(error => console.error('Помилка:', error));
+        }
+
+        // Додавання товару в кошик
+        document.querySelectorAll('.add-to-cart-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-id');
+                
+                fetch('../api/add_to_cart.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `product_id=${productId}&quantity=1`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateCartCount();
+                        alert('Товар успішно додано до кошика!');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => console.error('Помилка:', error));
+            });
+        });
+
+        // Оновлення кількості товарів при завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+    </script>
+</body>
+</html>
