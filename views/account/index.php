@@ -3,7 +3,7 @@
 // Особистий кабінет клієнта
 
 // Підключаємо конфігурацію
-define('ROOT_PATH', dirname(__DIR__));
+define('ROOT_PATH', dirname(dirname(__DIR__)));
 require_once ROOT_PATH . '/config.php';
 require_once ROOT_PATH . '/controllers/AuthController.php';
 require_once ROOT_PATH . '/controllers/CustomerController.php';

@@ -1,0 +1,17 @@
+{
+    "system": {
+        "site_name": "\u0412\u0438\u043d\u043d\u0430 \u043a\u0440\u0430\u043c\u043d\u0438\u0446\u044f",
+        "timezone": "Europe\/Kiev",
+        "items_per_page": 10,
+        "maintenance_mode": false
+    },
+    "email": {
+        "smtp_host": "localhost",
+        "smtp_port": 25,
+        "smtp_username": "",
+        "smtp_password": "",
+        "smtp_encryption": "tls",
+        "sender_email": "noreply@wineshop.com",
+        "sender_name": "\u0412\u0438\u043d\u043d\u0430 \u043a\u0440\u0430\u043c\u043d\u0438\u0446\u044f"
+    }
+}
