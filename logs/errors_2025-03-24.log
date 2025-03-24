@@ -47,3 +47,8 @@ Stack trace:
 #1 D:\diploms-2025\wine_sales_automation\api\cart_count.php(18): CustomerController->getCart('fa3d4b565f0ee91...')
 #2 {main}
 
+[2025-03-24 10:39:55] Uncaught Exception: Call to undefined method CustomerController::getFeaturedProducts()
+File: D:\diploms-2025\wine_sales_automation\index.php on line 79
+Stack trace: 
+#0 {main}
+

@@ -1,3 +1,84 @@
+<?php
+// index.php
+// Головна сторінка каталогу товарів
+
+// Підключаємо конфігурацію
+define('ROOT_PATH', __DIR__);
+require_once ROOT_PATH . '/config.php';
+require_once ROOT_PATH . '/controllers/CustomerController.php';
+require_once ROOT_PATH . '/controllers/AuthController.php';
+
+// Перевіряємо авторизацію
+$authController = new AuthController();
+$isLoggedIn = $authController->isLoggedIn();
+$currentUser = $isLoggedIn ? $authController->getCurrentUser() : null;
+
+// Ініціалізуємо контролер для роботи з каталогом
+$customerController = new CustomerController();
+
+// Отримання ID сесії з кукі або створення нового для кошика
+$sessionId = isset($_COOKIE['cart_session_id']) ? $_COOKIE['cart_session_id'] : $customerController->generateCartSessionId();
+
+// Якщо користувач авторизований, використовуємо його ID як сесію кошика
+if ($isLoggedIn) {
+    $sessionId = 'user_' . $currentUser['id'];
+}
+
+// Отримуємо вміст кошика для показу кількості товарів
+$cartItems = $customerController->getCart($sessionId);
+$totalQuantity = 0;
+foreach ($cartItems as $item) {
+    $totalQuantity += $item['quantity'];
+}
+
+// Отримання всіх категорій для меню
+$categories = $customerController->getAllCategories();
+
+// Отримання параметрів фільтрації з GET-запиту
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$categoryId = isset($_GET['category']) ? intval($_GET['category']) : 0;
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$sort = isset($_GET['sort']) ? $_GET['sort'] : '';
+
+// Визначення кількості товарів на сторінці
+$perPage = ITEMS_PER_PAGE;
+
+// Отримання списку товарів з урахуванням фільтрів
+if (!empty($search)) {
+    // Пошук товарів
+    $productsData = $customerController->searchProducts($search, $page, $perPage);
+    $title = 'Результати пошуку: ' . htmlspecialchars($search);
+} elseif ($categoryId > 0) {
+    // Товари конкретної категорії
+    $productsData = $customerController->getProductsByCategory($categoryId, $page, $perPage);
+    
+    // Знаходимо назву категорії
+    $categoryName = '';
+    foreach ($categories as $category) {
+        if ($category['id'] == $categoryId) {
+            $categoryName = $category['name'];
+            break;
+        }
+    }
+    
+    $title = htmlspecialchars($categoryName);
+} else {
+    // Всі товари
+    $productsData = $customerController->getAllProducts($page, $perPage);
+    $title = 'Наші вина';
+}
+
+// Отримуємо дані з результату
+$products = $productsData['data'];
+$pagination = $productsData['pagination'];
+
+// Отримання промоакцій для банера
+$promotions = $customerController->getActivePromotions();
+
+// Отримання рекомендованих товарів
+$featuredProducts = $customerController->getFeaturedProducts();
+
+?>
 
 <!DOCTYPE html>
 <html lang="uk">
@@ -31,7 +112,8 @@
                     <form action="index.php" method="GET" class="flex">
                         <input type="text" name="search" placeholder="Пошук вина..." 
                                class="px-4 py-2 rounded-l text-gray-800 focus:outline-none" 
-                               style="min-width: 300px;">
+                               style="min-width: 300px;"
+                               value="<?= htmlspecialchars($search) ?>">
                         <button type="submit" class="bg-red-900 px-4 py-2 rounded-r hover:bg-red-700">
                             <i class="fas fa-search"></i>
                         </button>
@@ -39,13 +121,21 @@
                 </div>
                 <a href="cart.php" class="relative">
                     <i class="fas fa-shopping-cart text-xl"></i>
-                    <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cart-count">0</span>
+                    <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cart-count"><?= $totalQuantity ?></span>
                 </a>
+                <?php if ($isLoggedIn): ?>
+                <div class="flex items-center space-x-2">
+                    <a href="account/index.php" class="hover:text-red-200"><?= htmlspecialchars($currentUser['name']) ?></a>
+                    <span>|</span>
+                    <a href="logout.php" class="hover:text-red-200">Вихід</a>
+                </div>
+                <?php else: ?>
                 <div class="flex items-center space-x-2">
                     <a href="login.php" class="hover:text-red-200">Увійти</a>
                     <span>|</span>
                     <a href="register.php" class="hover:text-red-200">Реєстрація</a>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
         
@@ -53,12 +143,10 @@
         <nav class="bg-red-900">
             <div class="container mx-auto px-4">
                 <ul class="flex space-x-6 py-3">
-                    <li><a href="index.php" class="hover:text-red-200">Головна</a></li>
-                    <li><a href="index.php?category=1" class="hover:text-red-200">Червоні вина</a></li>
-                    <li><a href="index.php?category=2" class="hover:text-red-200">Білі вина</a></li>
-                    <li><a href="index.php?category=3" class="hover:text-red-200">Рожеві вина</a></li>
-                    <li><a href="index.php?category=4" class="hover:text-red-200">Ігристі вина</a></li>
-                    <li><a href="index.php?category=5" class="hover:text-red-200">Десертні вина</a></li>
+                    <li><a href="index.php" class="<?= empty($categoryId) && empty($search) ? 'text-white font-bold' : 'hover:text-red-200' ?>">Головна</a></li>
+                    <?php foreach ($categories as $category): ?>
+                    <li><a href="index.php?category=<?= $category['id'] ?>" class="<?= $categoryId == $category['id'] ? 'text-white font-bold' : 'hover:text-red-200' ?>"><?= htmlspecialchars($category['name']) ?></a></li>
+                    <?php endforeach; ?>
                     <li><a href="about.php" class="hover:text-red-200">Про нас</a></li>
                     <li><a href="contact.php" class="hover:text-red-200">Контакти</a></li>
                 </ul>
@@ -67,245 +155,151 @@
     </header>
 
     <main class="container mx-auto px-4 py-8">
-        <!-- Банер -->
+        <?php if (empty($categoryId) && empty($search)): ?>
+        <!-- Банер (тільки на головній сторінці) -->
         <section class="mb-12 relative rounded-lg overflow-hidden shadow-lg">
             <img src="assets/images/banner.jpg" alt="Винна колекція" class="w-full h-96 object-cover">
             <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-start justify-center text-white p-8">
                 <h1 class="text-4xl font-bold mb-4">Винна крамниця</h1>
                 <p class="text-xl mb-6 max-w-lg">Відкрийте для себе вишукані вина з кращих виноградників. Доставка по всій Україні.</p>
-                <a href="#featured" class="bg-red-800 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition duration-300">
+                <?php if (!empty($promotions)): ?>
+                <div class="bg-red-800 px-6 py-3 rounded-lg font-semibold inline-block">
+                    <span>Акція: <?= htmlspecialchars($promotions[0]['name']) ?></span>
+                    <?php if ($promotions[0]['discount_percent']): ?>
+                    <span class="ml-2">-<?= $promotions[0]['discount_percent'] ?>%</span>
+                    <?php elseif ($promotions[0]['discount_amount']): ?>
+                    <span class="ml-2">-<?= number_format($promotions[0]['discount_amount'], 0) ?> ₴</span>
+                    <?php endif; ?>
+                </div>
+                <?php else: ?>
+                <a href="#products" class="bg-red-800 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold transition duration-300">
                     Обрати вино
                 </a>
+                <?php endif; ?>
             </div>
         </section>
 
-        <!-- Категорії -->
+        <!-- Категорії (тільки на головній сторінці) -->
         <section class="mb-12">
             <h2 class="text-3xl font-bold mb-6 text-gray-800">Категорії вин</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <a href="index.php?category=1" class="category-card bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-6 text-white shadow-md">
-                    <h3 class="text-xl font-semibold mb-2">Червоні вина</h3>
-                    <p class="text-sm opacity-80">Багатий смак та аромат</p>
+                <?php foreach ($categories as $category): ?>
+                <a href="index.php?category=<?= $category['id'] ?>" class="category-card bg-gradient-to-br from-red-800 to-red-900 rounded-lg p-6 text-white shadow-md">
+                    <h3 class="text-xl font-semibold mb-2"><?= htmlspecialchars($category['name']) ?></h3>
+                    <p class="text-sm opacity-80"><?= htmlspecialchars(mb_substr($category['description'], 0, 30)) ?>...</p>
                 </a>
-                <a href="index.php?category=2" class="category-card bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-6 text-white shadow-md">
-                    <h3 class="text-xl font-semibold mb-2">Білі вина</h3>
-                    <p class="text-sm opacity-80">Свіжі та ароматні</p>
-                </a>
-                <a href="index.php?category=3" class="category-card bg-gradient-to-br from-pink-400 to-pink-500 rounded-lg p-6 text-white shadow-md">
-                    <h3 class="text-xl font-semibold mb-2">Рожеві вина</h3>
-                    <p class="text-sm opacity-80">Освіжаючі з ягідними нотками</p>
-                </a>
-                <a href="index.php?category=4" class="category-card bg-gradient-to-br from-blue-400 to-blue-500 rounded-lg p-6 text-white shadow-md">
-                    <h3 class="text-xl font-semibold mb-2">Ігристі вина</h3>
-                    <p class="text-sm opacity-80">Для святкувань та особливих моментів</p>
-                </a>
-                <a href="index.php?category=5" class="category-card bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-6 text-white shadow-md">
-                    <h3 class="text-xl font-semibold mb-2">Десертні вина</h3>
-                    <p class="text-sm opacity-80">Солодкі та напівсолодкі</p>
-                </a>
+                <?php endforeach; ?>
             </div>
         </section>
+        <?php endif; ?>
 
         <!-- Фільтри та сортування -->
         <section class="mb-4 flex justify-between items-center">
             <div class="flex space-x-2">
                 <span class="text-gray-600">Сортувати за:</span>
-                <a href="?sort=price_asc" class="text-red-800 hover:underline">Ціна ↑</a>
-                <a href="?sort=price_desc" class="text-red-800 hover:underline">Ціна ↓</a>
-                <a href="?sort=name" class="text-red-800 hover:underline">Назва</a>
+                <a href="<?= $categoryId ? "index.php?category=$categoryId&sort=price_asc" : "index.php?sort=price_asc" ?><?= $search ? "&search=".urlencode($search) : "" ?>" class="text-red-800 hover:underline <?= $sort == 'price_asc' ? 'font-bold' : '' ?>">Ціна ↑</a>
+                <a href="<?= $categoryId ? "index.php?category=$categoryId&sort=price_desc" : "index.php?sort=price_desc" ?><?= $search ? "&search=".urlencode($search) : "" ?>" class="text-red-800 hover:underline <?= $sort == 'price_desc' ? 'font-bold' : '' ?>">Ціна ↓</a>
+                <a href="<?= $categoryId ? "index.php?category=$categoryId&sort=name" : "index.php?sort=name" ?><?= $search ? "&search=".urlencode($search) : "" ?>" class="text-red-800 hover:underline <?= $sort == 'name' ? 'font-bold' : '' ?>">Назва</a>
             </div>
             <div class="text-gray-600">
-                Показано <span class="font-semibold">12</span> з <span class="font-semibold">24</span> товарів
+                Показано <span class="font-semibold"><?= count($products) ?></span> з <span class="font-semibold"><?= $pagination['total'] ?></span> товарів
             </div>
         </section>
 
         <!-- Товари -->
-        <section id="featured" class="mb-12">
-            <h2 class="text-3xl font-bold mb-6 text-gray-800">Наші вина</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Карточка товару 1 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine1.jpg" alt="Каберне Преміум" class="w-full h-64 object-cover">
-                        <span class="absolute top-2 right-2 bg-red-800 text-white px-2 py-1 rounded text-sm">Новинка</span>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Каберне Преміум</h3>
-                            <span class="text-red-800 font-bold">359 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Сухе червоне вино з багатим смаком та ароматом чорних ягід</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=1" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="1">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
+        <section id="products" class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800"><?= $title ?></h2>
+            
+            <?php if (empty($products)): ?>
+            <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                <div class="mb-6 text-gray-500">
+                    <i class="fas fa-wine-bottle text-6xl"></i>
                 </div>
-                
-                <!-- Карточка товару 2 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine2.jpg" alt="Мерло Класік" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Мерло Класік</h3>
-                            <span class="text-red-800 font-bold">289 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">М'яке червоне вино з оксамитовою текстурою</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=2" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="2">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 3 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine3.jpg" alt="Шардоне Резерв" class="w-full h-64 object-cover">
-                        <span class="absolute top-2 right-2 bg-red-800 text-white px-2 py-1 rounded text-sm">Популярне</span>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Шардоне Резерв</h3>
-                            <span class="text-red-800 font-bold">329 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Елегантне біле вино з фруктовими нотками</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=3" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="3">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 4 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine4.jpg" alt="Совіньйон Блан" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Совіньйон Блан</h3>
-                            <span class="text-red-800 font-bold">299 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Свіже біле вино з яскравою кислотністю</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=4" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="4">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 5 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine5.jpg" alt="Рожеве Преміум" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Рожеве Преміум</h3>
-                            <span class="text-red-800 font-bold">279 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Освіжаюче рожеве вино з нотками ягід</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=5" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="5">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 6 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine6.jpg" alt="Ігристе Брют" class="w-full h-64 object-cover">
-                        <span class="absolute top-2 right-2 bg-red-800 text-white px-2 py-1 rounded text-sm">Популярне</span>
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Ігристе Брют</h3>
-                            <span class="text-red-800 font-bold">399 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Сухе ігристе вино, виготовлене за класичною технологією</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=6" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="6">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 7 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine7.jpg" alt="Портвейн Рубі" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Портвейн Рубі</h3>
-                            <span class="text-red-800 font-bold">459 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Солодке кріплене вино з багатим смаком</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=7" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="7">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Карточка товару 8 -->
-                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
-                    <div class="relative">
-                        <img src="assets/images/wine8.jpg" alt="Піно Нуар" class="w-full h-64 object-cover">
-                    </div>
-                    <div class="p-4">
-                        <div class="flex justify-between">
-                            <h3 class="text-lg font-semibold text-gray-800">Піно Нуар</h3>
-                            <span class="text-red-800 font-bold">379 ₴</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-4">Елегантне червоне вино з фруктовими нотами</p>
-                        <div class="flex justify-between">
-                            <a href="product.php?id=8" class="text-red-800 hover:underline text-sm">Детальніше</a>
-                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
-                                    data-id="8">
-                                Додати в кошик
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <h3 class="text-xl font-semibold mb-2">Товари не знайдені</h3>
+                <p class="text-gray-600 mb-4">
+                    <?php if (!empty($search)): ?>
+                    На жаль, за вашим запитом "<?= htmlspecialchars($search) ?>" нічого не знайдено.
+                    <?php elseif ($categoryId > 0): ?>
+                    У цій категорії поки немає товарів.
+                    <?php else: ?>
+                    Наразі каталог товарів порожній.
+                    <?php endif; ?>
+                </p>
+                <a href="index.php" class="inline-block bg-red-800 text-white rounded px-4 py-2 hover:bg-red-700">Повернутися на головну</a>
             </div>
+            <?php else: ?>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <?php foreach ($products as $product): ?>
+                <!-- Карточка товару -->
+                <div class="wine-card bg-white rounded-lg overflow-hidden shadow-md">
+                    <div class="relative">
+                        <img src="assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-64 object-cover">
+                        <?php if ($product['featured']): ?>
+                        <span class="absolute top-2 right-2 bg-red-800 text-white px-2 py-1 rounded text-sm">Популярне</span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex justify-between">
+                            <h3 class="text-lg font-semibold text-gray-800"><?= htmlspecialchars($product['name']) ?></h3>
+                            <span class="text-red-800 font-bold"><?= number_format($product['price'], 0) ?> ₴</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-4"><?= htmlspecialchars(mb_substr($product['description'], 0, 60)) ?>...</p>
+                        <div class="flex justify-between">
+                            <a href="product.php?id=<?= $product['id'] ?>" class="text-red-800 hover:underline text-sm">Детальніше</a>
+                            <button class="add-to-cart bg-red-800 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm" 
+                                    data-id="<?= $product['id'] ?>">
+                                Додати в кошик
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
         </section>
 
         <!-- Пагінація -->
+        <?php if ($pagination['total_pages'] > 1): ?>
         <section class="flex justify-center mb-12">
             <div class="flex space-x-2">
-                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">1</a>
-                <a href="#" class="px-4 py-2 bg-red-800 text-white rounded-lg">2</a>
-                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">3</a>
-                <span class="px-4 py-2">...</span>
-                <a href="#" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">5</a>
+                <?php 
+                // Визначення параметрів URL для пагінації
+                $urlParams = [];
+                if ($categoryId > 0) $urlParams[] = "category=$categoryId";
+                if (!empty($search)) $urlParams[] = "search=" . urlencode($search);
+                if (!empty($sort)) $urlParams[] = "sort=$sort";
+                $urlBase = "index.php?" . implode('&', $urlParams);
+                if (!empty($urlParams)) $urlBase .= '&';
+                
+                // Визначення діапазону сторінок для відображення
+                $startPage = max(1, $pagination['current_page'] - 2);
+                $endPage = min($pagination['total_pages'], $startPage + 4);
+                $startPage = max(1, $endPage - 4);
+                
+                // Кнопка "Попередня"
+                if ($pagination['current_page'] > 1):
+                ?>
+                <a href="<?= $urlBase ?>page=<?= $pagination['current_page'] - 1 ?>" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <?php endif; ?>
+                
+                <!-- Номери сторінок -->
+                <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                <a href="<?= $urlBase ?>page=<?= $i ?>" class="px-4 py-2 <?= $i == $pagination['current_page'] ? 'bg-red-800 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300' ?> rounded-lg">
+                    <?= $i ?>
+                </a>
+                <?php endfor; ?>
+                
+                <!-- Кнопка "Наступна" -->
+                <?php if ($pagination['current_page'] < $pagination['total_pages']): ?>
+                <a href="<?= $urlBase ?>page=<?= $pagination['current_page'] + 1 ?>" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <?php endif; ?>
             </div>
         </section>
+        <?php endif; ?>
 
         <!-- Переваги -->
         <section class="bg-gray-100 rounded-lg p-8 mb-12">
@@ -353,11 +347,9 @@
                 <div>
                     <h3 class="text-xl font-semibold mb-4">Категорії</h3>
                     <ul class="space-y-2">
-                        <li><a href="index.php?category=1" class="text-gray-400 hover:text-white">Червоні вина</a></li>
-                        <li><a href="index.php?category=2" class="text-gray-400 hover:text-white">Білі вина</a></li>
-                        <li><a href="index.php?category=3" class="text-gray-400 hover:text-white">Рожеві вина</a></li>
-                        <li><a href="index.php?category=4" class="text-gray-400 hover:text-white">Ігристі вина</a></li>
-                        <li><a href="index.php?category=5" class="text-gray-400 hover:text-white">Десертні вина</a></li>
+                        <?php foreach ($categories as $category): ?>
+                        <li><a href="index.php?category=<?= $category['id'] ?>" class="text-gray-400 hover:text-white"><?= htmlspecialchars($category['name']) ?></a></li>
+                        <?php endforeach; ?>
                     </ul>
                 </div>
                 <div>
@@ -388,6 +380,8 @@
                     </ul>
                     <div class="mt-4 flex space-x-4">
                         <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
                     </div>
                 </div>
             </div>
@@ -419,16 +413,6 @@
     </div>
 
     <script>
-        // Підрахунок кількості товарів у кошику
-        function updateCartCount() {
-            fetch('api/cart_count.php')
-                .then(response => response.json())
-                .then(data => {
-                    document.querySelector('.cart-count').textContent = data.count;
-                })
-                .catch(error => console.error('Помилка:', error));
-        }
-
         // Додавання товару в кошик
         document.querySelectorAll('.add-to-cart').forEach(button => {
             button.addEventListener('click', function() {
@@ -463,6 +447,16 @@
         document.getElementById('continueShopping').addEventListener('click', function() {
             document.getElementById('cartModal').classList.add('hidden');
         });
+
+        // Підрахунок кількості товарів у кошику
+        function updateCartCount() {
+            fetch('api/cart_count.php')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.cart-count').textContent = data.count;
+                })
+                .catch(error => console.error('Помилка:', error));
+        }
 
         // Оновлення кількості товарів при завантаженні сторінки
         document.addEventListener('DOMContentLoaded', function() {

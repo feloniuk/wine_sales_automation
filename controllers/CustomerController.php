@@ -27,41 +27,7 @@ class CustomerController {
         return $this->db->select($query);
     }
 
-    // Отримання всіх товарів з пагінацією
-    public function getAllProducts($page = 1, $perPage = ITEMS_PER_PAGE) {
-        $query = "SELECT p.*, pc.name as category_name 
-                FROM products p 
-                JOIN product_categories pc ON p.category_id = pc.id 
-                WHERE p.status = 'active'
-                ORDER BY p.name";
-        
-        return $this->db->paginate($query, [], $page, $perPage);
-    }
-
-    // Отримання товарів за категорією
-    public function getProductsByCategory($categoryId, $page = 1, $perPage = ITEMS_PER_PAGE) {
-        $query = "SELECT p.*, pc.name as category_name 
-                FROM products p 
-                JOIN product_categories pc ON p.category_id = pc.id 
-                WHERE p.category_id = ? AND p.status = 'active'
-                ORDER BY p.name";
-        
-        return $this->db->paginate($query, [$categoryId], $page, $perPage);
-    }
-
-    // Пошук товарів
-    public function searchProducts($keyword, $page = 1, $perPage = ITEMS_PER_PAGE) {
-        $query = "SELECT p.*, pc.name as category_name 
-                FROM products p 
-                JOIN product_categories pc ON p.category_id = pc.id 
-                WHERE (p.name LIKE ? OR p.description LIKE ? OR p.details LIKE ?) 
-                AND p.status = 'active'
-                ORDER BY p.name";
-        
-        $searchParam = "%$keyword%";
-        return $this->db->paginate($query, [$searchParam, $searchParam, $searchParam], $page, $perPage);
-    }
-
+   
     // Отримання детальної інформації про товар
     public function getProductDetails($productId) {
         // Основна інформація про товар
@@ -427,6 +393,112 @@ class CustomerController {
         
         return $this->db->select($query, [$customerId]);
     }
+
+    // Methods to add to the CustomerController class
+
+/**
+ * Отримання рекомендованих товарів (featured products)
+ * 
+ * @param int $limit Кількість товарів для отримання
+ * @return array Масив товарів із позначкою "featured"
+ */
+public function getFeaturedProducts($limit = 4) {
+    $query = "SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.featured = 1 AND p.status = 'active'
+             ORDER BY p.name
+             LIMIT ?";
+    
+    return $this->db->select($query, [$limit]);
+}
+
+/**
+ * Сортування товарів за різними критеріями
+ *
+ * @param string $sort Критерій сортування
+ * @return string SQL частина для ORDER BY
+ */
+private function getSortingOrder($sort) {
+    switch ($sort) {
+        case 'price_asc':
+            return "ORDER BY p.price ASC";
+        case 'price_desc':
+            return "ORDER BY p.price DESC";
+        case 'name':
+            return "ORDER BY p.name ASC";
+        case 'newest':
+            return "ORDER BY p.created_at DESC";
+        case 'popularity':
+            return "ORDER BY p.featured DESC, p.id DESC";
+        default:
+            return "ORDER BY p.name ASC";
+    }
+}
+
+/**
+ * Отримання всіх товарів з пагінацією та сортуванням
+ * 
+ * @param int $page Номер сторінки
+ * @param int $perPage Кількість товарів на сторінці
+ * @param string $sort Критерій сортування
+ * @return array Результат з даними та інформацією про пагінацію
+ */
+public function getAllProducts($page = 1, $perPage = ITEMS_PER_PAGE, $sort = '') {
+    $orderBy = $this->getSortingOrder($sort);
+    
+    $query = "SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.status = 'active'
+             $orderBy";
+    
+    return $this->db->paginate($query, [], $page, $perPage);
+}
+
+/**
+ * Отримання товарів за категорією з пагінацією та сортуванням
+ * 
+ * @param int $categoryId ID категорії
+ * @param int $page Номер сторінки
+ * @param int $perPage Кількість товарів на сторінці
+ * @param string $sort Критерій сортування
+ * @return array Результат з даними та інформацією про пагінацію
+ */
+public function getProductsByCategory($categoryId, $page = 1, $perPage = ITEMS_PER_PAGE, $sort = '') {
+    $orderBy = $this->getSortingOrder($sort);
+    
+    $query = "SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.category_id = ? AND p.status = 'active'
+             $orderBy";
+    
+    return $this->db->paginate($query, [$categoryId], $page, $perPage);
+}
+
+/**
+ * Пошук товарів з пагінацією та сортуванням
+ * 
+ * @param string $keyword Ключове слово для пошуку
+ * @param int $page Номер сторінки
+ * @param int $perPage Кількість товарів на сторінці
+ * @param string $sort Критерій сортування
+ * @return array Результат з даними та інформацією про пагінацію
+ */
+public function searchProducts($keyword, $page = 1, $perPage = ITEMS_PER_PAGE, $sort = '') {
+    $orderBy = $this->getSortingOrder($sort);
+    
+    $query = "SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE (p.name LIKE ? OR p.description LIKE ? OR p.details LIKE ?) 
+             AND p.status = 'active'
+             $orderBy";
+    
+    $searchParam = "%$keyword%";
+    return $this->db->paginate($query, [$searchParam, $searchParam, $searchParam], $page, $perPage);
+}
 
     // Отримання детальної інформації про замовлення клієнта
     public function getCustomerOrderDetails($orderId, $customerId) {

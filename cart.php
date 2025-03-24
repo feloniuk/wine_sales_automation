@@ -263,7 +263,7 @@ $activePromotions = $customerController->getActivePromotions();
                     <div class="p-6 border-b">
                         <h2 class="text-xl font-semibold">Товари в кошику</h2>
                     </div>
-                    <form method="POST" action="cart.php">
+                    <form method="POST" action="cart.php" id="cart-form">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-gray-50">
@@ -371,7 +371,7 @@ $activePromotions = $customerController->getActivePromotions();
                     <!-- Промокод -->
                     <div class="mb-6">
                         <form method="POST" action="cart.php" class="flex flex-col space-y-2">
-                            <input type="hidden" name="subtotal" value="<?= $subtotal ?>">
+                            <input type="hidden" name="subtotal" id="promo-subtotal" value="<?= $subtotal ?>">
                             <div class="flex">
                                 <input type="text" name="promo_code" placeholder="Промокод" class="flex-1 border rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
                                 <button type="submit" name="apply_promo" class="bg-red-800 hover:bg-red-700 text-white px-4 py-2 rounded-r">
@@ -483,7 +483,27 @@ $activePromotions = $customerController->getActivePromotions();
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Функції для збільшення та зменшення кількості товару
-            document.querySelectorAll('.increase-quantity').forEach(button => {
+            const quantityInputs = document.querySelectorAll('input[type="number"]');
+            const decreaseButtons = document.querySelectorAll('.decrease-quantity');
+            const increaseButtons = document.querySelectorAll('.increase-quantity');
+            
+            // Додаємо обробники подій для кнопок зменшення кількості
+            decreaseButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const itemId = this.getAttribute('data-item-id');
+                    const input = document.querySelector(`input[name="quantity[${itemId}]"]`);
+                    
+                    let value = parseInt(input.value) - 1;
+                    if (value < 1) value = 1;
+                    
+                    input.value = value;
+                    updateItemTotal(itemId);
+                    updateTotals();
+                });
+            });
+
+            // Додаємо обробники подій для кнопок збільшення кількості
+            increaseButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const itemId = this.getAttribute('data-item-id');
                     const input = document.querySelector(`input[name="quantity[${itemId}]"]`);
@@ -501,22 +521,8 @@ $activePromotions = $customerController->getActivePromotions();
                 });
             });
 
-            document.querySelectorAll('.decrease-quantity').forEach(button => {
-                button.addEventListener('click', function() {
-                    const itemId = this.getAttribute('data-item-id');
-                    const input = document.querySelector(`input[name="quantity[${itemId}]"]`);
-                    
-                    let value = parseInt(input.value) - 1;
-                    if (value < 1) value = 1;
-                    
-                    input.value = value;
-                    updateItemTotal(itemId);
-                    updateTotals();
-                });
-            });
-
             // Оновлення при зміні кількості вручну
-            document.querySelectorAll('input[type="number"]').forEach(input => {
+            quantityInputs.forEach(input => {
                 input.addEventListener('change', function() {
                     const itemId = this.getAttribute('data-item-id');
                     const maxQuantity = parseInt(document.querySelector(`.increase-quantity[data-item-id="${itemId}"]`).getAttribute('data-max')) || 100;
@@ -534,7 +540,7 @@ $activePromotions = $customerController->getActivePromotions();
                 });
             });
 
-            // Оновлення суми товару
+            // Функція для оновлення суми товару
             function updateItemTotal(itemId) {
                 const input = document.querySelector(`input[name="quantity[${itemId}]"]`);
                 const price = parseFloat(input.getAttribute('data-price'));
@@ -542,10 +548,12 @@ $activePromotions = $customerController->getActivePromotions();
                 const total = price * quantity;
                 
                 const totalElement = document.querySelector(`.item-total[data-item-id="${itemId}"]`);
-                totalElement.textContent = total.toFixed(2) + ' ₴';
+                if (totalElement) {
+                    totalElement.textContent = formatPrice(total);
+                }
             }
             
-            // Оновлення загальної суми
+            // Функція для оновлення загальної суми
             function updateTotals() {
                 let subtotal = 0;
                 
@@ -560,27 +568,39 @@ $activePromotions = $customerController->getActivePromotions();
                 
                 // Оновлення підсумку
                 const subtotalElement = document.getElementById('subtotal');
-                subtotalElement.textContent = subtotal.toFixed(2) + ' ₴';
+                if (subtotalElement) {
+                    subtotalElement.textContent = formatPrice(subtotal);
+                }
                 
-                // Отримання знижки та доставки
-                const discountElement = document.querySelector('.text-green-600 span:last-child');
+                // Оновлення прихованого поля для промокоду
+                const promoSubtotalInput = document.getElementById('promo-subtotal');
+                if (promoSubtotalInput) {
+                    promoSubtotalInput.value = subtotal.toFixed(2);
+                }
+                
+                // Отримання знижки
                 let discount = 0;
+                const discountElement = document.querySelector('.text-green-600 span:last-child');
                 if (discountElement) {
-                    discount = parseFloat(discountElement.textContent.replace(/[^\d.-]/g, ''));
+                    // Витягуємо числове значення з тексту "-123.45 ₴"
+                    const discountText = discountElement.textContent.trim();
+                    const discountMatch = discountText.match(/(\d+[.,]?\d*)/);
+                    if (discountMatch && discountMatch[1]) {
+                        discount = parseFloat(discountMatch[1].replace(',', '.'));
+                    }
                 }
                 
-                const shippingElement = document.querySelector('.text-gray-600 + .font-medium');
-                let shipping = 0;
-                if (shippingElement) {
-                    shipping = parseFloat(shippingElement.textContent.replace(/[^\d.-]/g, ''));
-                }
+                // Отримання вартості доставки (фіксована)
+                const shippingCost = 150.00; // Фіксована вартість доставки
                 
                 // Розрахунок загальної суми
-                const total = subtotal - discount + shipping;
+                const total = subtotal - discount + shippingCost;
                 
                 // Оновлення загальної суми
                 const totalElement = document.getElementById('total');
-                totalElement.textContent = total.toFixed(2) + ' ₴';
+                if (totalElement) {
+                    totalElement.textContent = formatPrice(total);
+                }
                 
                 // Оновлення кількості товарів у кошику у верхньому меню
                 let cartCount = 0;
@@ -588,8 +608,19 @@ $activePromotions = $customerController->getActivePromotions();
                     cartCount += parseInt(input.value) || 0;
                 });
                 
-                document.querySelector('.cart-count').textContent = cartCount;
+                const cartCountElements = document.querySelectorAll('.cart-count');
+                cartCountElements.forEach(element => {
+                    element.textContent = cartCount;
+                });
             }
+            
+            // Форматування ціни
+            function formatPrice(price) {
+                return price.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,') + ' ₴';
+            }
+            
+            // Ініціалізація підсумку при завантаженні сторінки
+            updateTotals();
         });
     </script>
 </body>
