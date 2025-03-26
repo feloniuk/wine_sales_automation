@@ -3,7 +3,7 @@
 // Головна сторінка каталогу товарів
 
 // Підключаємо конфігурацію
-define('ROOT_PATH', __DIR__);
+define('ROOT_PATH', ((__DIR__)));
 require_once ROOT_PATH . '/config.php';
 require_once ROOT_PATH . '/controllers/CustomerController.php';
 require_once ROOT_PATH . '/controllers/AuthController.php';
@@ -125,7 +125,7 @@ $featuredProducts = $customerController->getFeaturedProducts();
                 </a>
                 <?php if ($isLoggedIn): ?>
                 <div class="flex items-center space-x-2">
-                    <a href="account/index.php" class="hover:text-red-200"><?= htmlspecialchars($currentUser['name']) ?></a>
+                    <a href="views/<?= htmlspecialchars($currentUser['role']) ?>/index.php" class="hover:text-red-200"><?= htmlspecialchars($currentUser['name']) ?></a>
                     <span>|</span>
                     <a href="logout.php" class="hover:text-red-200">Вихід</a>
                 </div>
@@ -147,8 +147,7 @@ $featuredProducts = $customerController->getFeaturedProducts();
                     <?php foreach ($categories as $category): ?>
                     <li><a href="index.php?category=<?= $category['id'] ?>" class="<?= $categoryId == $category['id'] ? 'text-white font-bold' : 'hover:text-red-200' ?>"><?= htmlspecialchars($category['name']) ?></a></li>
                     <?php endforeach; ?>
-                    <li><a href="about.php" class="hover:text-red-200">Про нас</a></li>
-                    <li><a href="contact.php" class="hover:text-red-200">Контакти</a></li>
+                
                 </ul>
             </div>
         </nav>
@@ -158,7 +157,7 @@ $featuredProducts = $customerController->getFeaturedProducts();
         <?php if (empty($categoryId) && empty($search)): ?>
         <!-- Банер (тільки на головній сторінці) -->
         <section class="mb-12 relative rounded-lg overflow-hidden shadow-lg">
-            <img src="assets/images/banner.jpg" alt="Винна колекція" class="w-full h-96 object-cover">
+            <img src="assets/images/banner.webp" alt="Винна колекція" class="w-full h-96 object-cover">
             <div class="absolute inset-0 bg-black bg-opacity-40 flex flex-col items-start justify-center text-white p-8">
                 <h1 class="text-4xl font-bold mb-4">Винна крамниця</h1>
                 <p class="text-xl mb-6 max-w-lg">Відкрийте для себе вишукані вина з кращих виноградників. Доставка по всій Україні.</p>
@@ -429,6 +428,11 @@ $featuredProducts = $customerController->getFeaturedProducts();
                 .then(data => {
                     if (data.success) {
                         updateCartCount();
+                        let cartCountSpan = document.querySelector(".cart-count");
+                        if (cartCountSpan) {
+                            cartCountSpan.textContent = parseInt(cartCountSpan.textContent || "0") + 1;
+                        }
+
                         // Показати модальне вікно
                         document.getElementById('cartModal').classList.remove('hidden');
                     } else {

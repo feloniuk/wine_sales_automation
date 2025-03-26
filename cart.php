@@ -196,8 +196,6 @@ $activePromotions = $customerController->getActivePromotions();
                     <li><a href="index.php?category=3" class="hover:text-red-200">Рожеві вина</a></li>
                     <li><a href="index.php?category=4" class="hover:text-red-200">Ігристі вина</a></li>
                     <li><a href="index.php?category=5" class="hover:text-red-200">Десертні вина</a></li>
-                    <li><a href="about.php" class="hover:text-red-200">Про нас</a></li>
-                    <li><a href="contact.php" class="hover:text-red-200">Контакти</a></li>
                 </ul>
             </div>
         </nav>
@@ -441,14 +439,6 @@ $activePromotions = $customerController->getActivePromotions();
                         <li><a href="index.php?category=3" class="text-gray-400 hover:text-white">Рожеві вина</a></li>
                         <li><a href="index.php?category=4" class="text-gray-400 hover:text-white">Ігристі вина</a></li>
                         <li><a href="index.php?category=5" class="text-gray-400 hover:text-white">Десертні вина</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold mb-4">Інформація</h3>
-                    <ul class="space-y-2">
-                        <li><a href="about.php" class="text-gray-400 hover:text-white">Про нас</a></li>
-                        <li><a href="delivery.php" class="text-gray-400 hover:text-white">Доставка та оплата</a></li>
-                        <li><a href="contact.php" class="text-gray-400 hover:text-white">Контакти</a></li>
                     </ul>
                 </div>
                 <div>

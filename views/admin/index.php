@@ -91,9 +91,9 @@ $dashboardData = $adminController->getDashboardData();
                     <div class="flex items-center">
                         <div class="relative mr-4">
                             <span class="absolute top-0 right-0 -mt-1 -mr-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"><?= count($dashboardData['alerts']) ?></span>
-                            <button class="text-gray-500 hover:text-gray-700">
+                            <a href="http://winery_sales.loc/views/admin/alerts.php" class="text-gray-500 hover:text-gray-700">
                                 <i class="fas fa-bell text-xl"></i>
-                            </button>
+</a>
                         </div>
                         <div class="relative">
                             <button class="flex items-center text-gray-700 focus:outline-none">

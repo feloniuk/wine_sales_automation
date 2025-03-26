@@ -130,8 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <li><a href="index.php?category=3" class="hover:text-red-200">Рожеві вина</a></li>
                     <li><a href="index.php?category=4" class="hover:text-red-200">Ігристі вина</a></li>
                     <li><a href="index.php?category=5" class="hover:text-red-200">Десертні вина</a></li>
-                    <li><a href="about.php" class="hover:text-red-200">Про нас</a></li>
-                    <li><a href="contact.php" class="hover:text-red-200">Контакти</a></li>
                 </ul>
             </div>
         </nav>

@@ -91,3 +91,26 @@ set_exception_handler(function($exception) {
 // Реєструємо функції автозавантаження
 spl_autoload_register('autoload_controller');
 spl_autoload_register('autoload_model');
+
+// Отримуємо вміст кошика для показу кількості товарів
+
+require_once ROOT_PATH . '/controllers/CustomerController.php';
+
+
+
+$customerController = new CustomerController();
+$authController = new AuthController();
+
+$sessionId = isset($_COOKIE['cart_session_id']) ? $_COOKIE['cart_session_id'] : $customerController->generateCartSessionId();
+
+if ($authController->isLoggedIn()) {
+    // Якщо користувач авторизований, використовуємо його ID як сесію
+    $currentUser = $authController->getCurrentUser();
+    $sessionId = 'user_' . $currentUser['id'];
+}
+
+$cartItems = $customerController->getCart($sessionId);
+$totalQuantity = 0;
+foreach ($cartItems as $item) {
+    $totalQuantity += $item['quantity'];
+}

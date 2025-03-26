@@ -285,14 +285,6 @@ $dashboardData = $customerController->getCustomerDashboard($currentUser['id']);
                     </ul>
                 </div>
                 <div>
-                    <h3 class="text-xl font-semibold mb-4">Інформація</h3>
-                    <ul class="space-y-2">
-                        <li><a href="../about.php" class="text-gray-400 hover:text-white">Про нас</a></li>
-                        <li><a href="../delivery.php" class="text-gray-400 hover:text-white">Доставка та оплата</a></li>
-                        <li><a href="../contact.php" class="text-gray-400 hover:text-white">Контакти</a></li>
-                    </ul>
-                </div>
-                <div>
                     <h3 class="text-xl font-semibold mb-4">Контакти</h3>
                     <ul class="space-y-2 text-gray-400">
                         <li class="flex items-start">
