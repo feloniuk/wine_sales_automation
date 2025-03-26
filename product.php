@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['review_submit']) && $
                 <!-- Зображення товару -->
                 <div class="md:w-1/3 mb-6 md:mb-0">
                     <div class="sticky top-6">
-                        <img src="assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="w-full h-auto rounded-lg">
+                        <img src="assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class=" h-auto rounded-lg">
                     </div>
                 </div>
                 
