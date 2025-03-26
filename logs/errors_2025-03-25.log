@@ -1,6 +1,0 @@
-[2025-03-25 19:04:56] Uncaught Exception: Call to a member function getCart() on null
-File: D:\diploms-2025\wine_sales_automation\config.php on line 99
-Stack trace: 
-#0 D:\diploms-2025\wine_sales_automation\product.php(7): require_once()
-#1 {main}
-
