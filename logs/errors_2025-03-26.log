@@ -1,0 +1,10 @@
+[2025-03-26 12:15:52] Uncaught Exception: Call to undefined method SalesController::getSalesStatisticsByPeriod()
+File: D:\diploms-2025\wine_sales_automation\views\sales\reports.php on line 29
+Stack trace: 
+#0 {main}
+
+[2025-03-26 12:17:02] Uncaught Exception: Call to undefined method SalesController::getSalesStatisticsByPeriod()
+File: D:\diploms-2025\wine_sales_automation\views\sales\reports.php on line 29
+Stack trace: 
+#0 {main}
+

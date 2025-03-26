@@ -553,6 +553,83 @@ public function getDashboardData($managerId) {
         ];
     }
 
+    public function getPopularCategories($limit = 5) {
+        $query = "SELECT 
+                    pc.id, 
+                    pc.name, 
+                    COUNT(DISTINCT o.id) as order_count,
+                    SUM(oi.quantity) as total_quantity,
+                    SUM(oi.quantity * oi.price) as total_sales
+                 FROM product_categories pc
+                 JOIN products p ON pc.id = p.category_id
+                 JOIN order_items oi ON p.id = oi.product_id
+                 JOIN orders o ON oi.order_id = o.id
+                 WHERE o.status != 'cancelled'
+                 GROUP BY pc.id, pc.name
+                 ORDER BY total_sales DESC
+                 LIMIT ?";
+        
+        return $this->db->select($query, [$limit]);
+    }
+
+    // Отримання найбільш активних клієнтів
+    public function getMostActiveCustomers($limit = 10) {
+        $query = "SELECT 
+                    u.id, 
+                    u.name, 
+                    u.email, 
+                    u.phone,
+                    COUNT(DISTINCT o.id) as order_count,
+                    SUM(o.total_amount) as total_spent,
+                    MAX(o.created_at) as last_order_date
+                 FROM users u
+                 JOIN orders o ON u.id = o.customer_id
+                 WHERE o.status != 'cancelled'
+                 GROUP BY u.id, u.name, u.email, u.phone
+                 ORDER BY total_spent DESC
+                 LIMIT ?";
+        
+        return $this->db->select($query, [$limit]);
+    }
+
+    // Отримання найпопулярніших товарів
+    public function getTopSellingProducts($limit = 10) {
+        $query = "SELECT 
+                    p.id, 
+                    p.name, 
+                    pc.name as category_name,
+                    SUM(oi.quantity) as total_quantity,
+                    COUNT(DISTINCT o.id) as order_count,
+                    SUM(oi.quantity * oi.price) as total_sales
+                 FROM products p
+                 JOIN product_categories pc ON p.category_id = pc.id
+                 JOIN order_items oi ON p.id = oi.product_id
+                 JOIN orders o ON oi.order_id = o.id
+                 WHERE o.status != 'cancelled'
+                 GROUP BY p.id, p.name, pc.name
+                 ORDER BY total_sales DESC
+                 LIMIT ?";
+        
+        return $this->db->select($query, [$limit]);
+    }
+
+    // Отримання статистики продажів за певний період
+    public function getSalesStatisticsByPeriod($startDate, $endDate) {
+        $query = "SELECT 
+                    DATE(o.created_at) as date,
+                    COUNT(DISTINCT o.id) as order_count,
+                    SUM(o.total_amount) as total_sales
+                 FROM orders o
+                 WHERE o.created_at BETWEEN ? AND ?
+                 AND o.status != 'cancelled'
+                 GROUP BY DATE(o.created_at)
+                 ORDER BY DATE(o.created_at)";
+        
+        return $this->db->select($query, [$startDate, $endDate]);
+    }
+
+    
+
     // Створення нового замовлення менеджером від імені клієнта
     public function createOrder($data) {
         // Перевіряємо наявність обов'язкових полів
