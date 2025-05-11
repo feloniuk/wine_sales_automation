@@ -31,6 +31,104 @@ $messageType = '';
 $selectedCustomerId = isset($_GET['customer_id']) ? intval($_GET['customer_id']) : 0;
 $selectedProducts = [];
 
+// AJAX запит на отримання списку товарів
+if (isset($_GET['ajax_search_products'])) {
+    $search = isset($_GET['term']) ? trim($_GET['term']) : '';
+    $category = isset($_GET['category']) ? intval($_GET['category']) : 0;
+    
+    if (empty($search) && $category <= 0) {
+        echo json_encode([]);
+        exit;
+    }
+    
+    $page = 1;
+    $perPage = 10;
+    
+    if (!empty($search)) {
+        $productsData = $customerController->searchProducts($search, $page, $perPage);
+    } elseif ($category > 0) {
+        $productsData = $customerController->getProductsByCategory($category, $page, $perPage);
+    } else {
+        $productsData = $customerController->getAllProducts($page, $perPage);
+    }
+    
+    $products = $productsData['data'];
+    
+    // Форматування результатів для Ajax
+    $results = [];
+    foreach ($products as $product) {
+        $results[] = [
+            'id' => $product['id'],
+            'name' => $product['name'],
+            'price' => $product['price'],
+            'image' => $product['image'],
+            'stock_quantity' => $product['stock_quantity'],
+            'category' => $product['category_name']
+        ];
+    }
+    
+    echo json_encode($results);
+    exit;
+}
+
+// AJAX запит на додавання товару до замовлення
+if (isset($_POST['ajax_add_product'])) {
+    $productId = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+    $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
+    
+    if ($productId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Невірний ID товару']);
+        exit;
+    }
+    
+    $productDetails = $customerController->getProductDetails($productId);
+    
+    if (!$productDetails['success']) {
+        echo json_encode(['success' => false, 'message' => 'Товар не знайдено']);
+        exit;
+    }
+    
+    if ($productDetails['product']['stock_quantity'] < $quantity) {
+        echo json_encode([
+            'success' => false, 
+            'message' => 'Недостатня кількість товару на складі. Доступно: ' . $productDetails['product']['stock_quantity']
+        ]);
+        exit;
+    }
+    
+    // Додаємо товар до сесійного списку обраних товарів
+    if (!isset($_SESSION['selected_products'])) {
+        $_SESSION['selected_products'] = [];
+    }
+    
+    // Перевіряємо, чи товар вже обраний
+    $productExists = false;
+    foreach ($_SESSION['selected_products'] as &$product) {
+        if ($product['id'] == $productId) {
+            $product['quantity'] += $quantity;
+            $productExists = true;
+            break;
+        }
+    }
+    
+    if (!$productExists) {
+        $_SESSION['selected_products'][] = [
+            'id' => $productId,
+            'name' => $productDetails['product']['name'],
+            'price' => $productDetails['product']['price'],
+            'image' => $productDetails['product']['image'],
+            'stock_quantity' => $productDetails['product']['stock_quantity'],
+            'quantity' => $quantity
+        ];
+    }
+    
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Товар "' . $productDetails['product']['name'] . '" додано до замовлення.'
+    ]);
+    exit;
+}
+
 // Якщо передано товар в GET, додаємо його до списку обраних товарів
 if (isset($_GET['add_product']) && is_numeric($_GET['add_product'])) {
     $productId = intval($_GET['add_product']);
@@ -184,6 +282,9 @@ if ($selectedCustomerId > 0) {
     }
 }
 
+// Отримуємо список категорій для фільтра
+$categories = $customerController->getAllCategories();
+
 // Розрахунок загальної суми замовлення
 $subtotal = 0;
 foreach ($selectedProducts as $product) {
@@ -205,6 +306,53 @@ $total = $subtotal + $shippingCost;
     <title>Нове замовлення - Винна крамниця</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Додаємо jQuery і jQuery UI для автозаповнення -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <style>
+        /* Стилі для автозаповнення */
+        .ui-autocomplete {
+            max-height: 300px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 9999;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .ui-menu-item {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .ui-menu-item:hover {
+            background-color: #f3f4f6;
+        }
+        .product-item {
+            display: flex;
+            align-items: center;
+        }
+        .product-item img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        .product-item-details {
+            flex: 1;
+        }
+        .product-item-name {
+            font-weight: 500;
+        }
+        .product-item-price {
+            font-size: 0.875rem;
+            color: #059669;
+        }
+        .product-item-stock {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="flex min-h-screen">
@@ -381,50 +529,97 @@ $total = $subtotal + $shippingCost;
                                     <p>Спочатку виберіть клієнта</p>
                                 </div>
                             <?php else: ?>
-                                <div class="mb-4">
-                                    <a href="products.php" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded inline-flex items-center">
-                                        <i class="fas fa-plus-circle mr-2"></i> Додати товари
-                                    </a>
+                                <!-- Пошук та додавання товарів -->
+                                <div class="mb-6">
+                                    <label for="product_search" class="block text-gray-700 font-medium mb-2">Пошук і додавання товарів</label>
+                                    <div class="flex flex-col md:flex-row gap-4">
+                                        <div class="md:w-1/3">
+                                            <select id="product_category" class="border rounded w-full p-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                                <option value="0">Всі категорії</option>
+                                                <?php foreach ($categories as $category): ?>
+                                                <option value="<?= $category['id'] ?>"><?= htmlspecialchars($category['name']) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="md:flex-1">
+                                            <div class="relative">
+                                                <input type="text" id="product_search" placeholder="Введіть назву товару..." 
+                                                       class="border rounded w-full p-2 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Обраний товар для додавання -->
+                                <div id="selected_product_container" class="mb-6 hidden border rounded p-4 bg-gray-50">
+                                    <div class="flex items-center">
+                                        <img id="selected_product_image" src="" alt="" class="w-16 h-16 object-cover rounded mr-4">
+                                        <div class="flex-1">
+                                            <h3 id="selected_product_name" class="font-medium"></h3>
+                                            <div class="flex justify-between">
+                                                <p id="selected_product_price" class="text-green-600"></p>
+                                                <p id="selected_product_stock" class="text-gray-500 text-sm"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 flex items-center">
+                                        <label for="selected_product_quantity" class="block text-gray-700 mr-2">Кількість:</label>
+                                        <input type="number" id="selected_product_quantity" value="1" min="1" 
+                                               class="border rounded w-20 p-1 text-center mr-2">
+                                        <button type="button" id="add_selected_product" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1 rounded">
+                                            Додати
+                                        </button>
+                                        <button type="button" id="cancel_selected_product" class="ml-2 text-gray-500 hover:text-gray-700">
+                                            <i class="fas fa-times"></i> Скасувати
+                                        </button>
+                                        <input type="hidden" id="selected_product_id" value="">
+                                        <input type="hidden" id="selected_product_max" value="">
+                                    </div>
                                 </div>
                                 
                                 <?php if (empty($selectedProducts)): ?>
-                                <div class="text-center text-gray-500 p-6">
+                                <div id="empty_products_message" class="text-center text-gray-500 p-6">
                                     <p>Додайте товари до замовлення</p>
                                 </div>
-                                <?php else: ?>
-                                <div class="overflow-x-auto">
-                                    <form action="new_order.php?customer_id=<?= $selectedCustomerId ?>" method="POST">
-                                        <table class="min-w-full">
-                                            <thead>
-                                                <tr class="bg-gray-50">
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
-                                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
+                                <?php endif; ?>
+                                
+                                <!-- Список обраних товарів -->
+                                <div id="selected_products_list" class="<?= empty($selectedProducts) ? 'hidden' : '' ?>">
+                                    <div class="overflow-x-auto">
+                                        <form action="new_order.php?customer_id=<?= $selectedCustomerId ?>" method="POST">
+                                            <table class="<table class="min-w-full divide-y divide-gray-200">
+                                            <thead class="bg-gray-50">
+                                                <tr>
+                                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
+                                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Всього</th>
+                                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
                                                 </tr>
                                             </thead>
                                             <tbody class="bg-white divide-y divide-gray-200">
                                                 <?php foreach ($selectedProducts as $product): ?>
                                                 <tr>
-                                                    <td class="px-4 py-2 whitespace-nowrap">
+                                                    <td class="px-4 py-4 whitespace-nowrap">
                                                         <div class="flex items-center">
-                                                            <div class="flex-shrink-0 h-10 w-10">
-                                                                <img src="../../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="h-10 w-10 rounded-full object-cover">
-                                                            </div>
-                                                            <div class="ml-4">
+                                                            <img src="http://winery_sales.loc/assets/images/<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" class="h-10 w-10 rounded-md object-cover mr-3">
+                                                            <div>
                                                                 <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="px-4 py-2 whitespace-nowrap text-sm"><?= number_format($product['price'], 2) ?> ₴</td>
-                                                    <td class="px-4 py-2 whitespace-nowrap">
-                                                        <input type="number" name="quantities[<?= $product['id'] ?>]" value="<?= $product['quantity'] ?>" min="1" max="<?= $product['stock_quantity'] ?>" 
-                                                               class="border w-16 p-1 text-center">
+                                                    <td class="px-4 py-4 whitespace-nowrap">
+                                                        <div class="text-sm text-gray-900"><?= number_format($product['price'], 2) ?> ₴</div>
                                                     </td>
-                                                    <td class="px-4 py-2 whitespace-nowrap text-sm font-medium"><?= number_format($product['price'] * $product['quantity'], 2) ?> ₴</td>
-                                                    <td class="px-4 py-2 whitespace-nowrap text-sm">
-                                                        <button type="submit" name="remove_product" class="text-red-600 hover:text-red-800" onclick="document.getElementById('product_id').value = <?= $product['id'] ?>">
+                                                    <td class="px-4 py-4 whitespace-nowrap">
+                                                        <input type="number" name="quantities[<?= $product['id'] ?>]" value="<?= $product['quantity'] ?>" min="1" max="<?= $product['stock_quantity'] ?>" class="border rounded w-16 p-1 text-center">
+                                                    </td>
+                                                    <td class="px-4 py-4 whitespace-nowrap">
+                                                        <div class="text-sm font-medium text-gray-900"><?= number_format($product['price'] * $product['quantity'], 2) ?> ₴</div>
+                                                    </td>
+                                                    <td class="px-4 py-4 whitespace-nowrap text-right">
+                                                        <button type="submit" name="remove_product" class="text-red-500 hover:text-red-700">
+                                                            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </td>
@@ -432,92 +627,187 @@ $total = $subtotal + $shippingCost;
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
-                                        <input type="hidden" id="product_id" name="product_id" value="">
-                                        <div class="flex justify-end mt-4">
-                                            <button type="submit" name="update_quantity" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
-                                                <i class="fas fa-sync-alt mr-2"></i> Оновити кількість
+                                        <div class="mt-3 flex justify-end">
+                                            <button type="submit" name="update_quantity" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded mr-2">
+                                                <i class="fas fa-sync-alt mr-1"></i> Оновити кількість
                                             </button>
                                         </div>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
-                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </div>
-                    
+
                     <!-- Права колонка - Підсумок замовлення -->
-                    <div>
+                    <div class="lg:col-span-1">
                         <div class="bg-white rounded-lg shadow p-6 sticky top-6">
                             <h2 class="text-lg font-semibold mb-4">Підсумок замовлення</h2>
                             
                             <?php if (empty($selectedCustomer)): ?>
-                            <div class="text-center text-gray-500 p-6">
-                                <p>Спочатку виберіть клієнта</p>
-                            </div>
+                                <div class="text-center text-gray-500 p-6">
+                                    <p>Спочатку виберіть клієнта</p>
+                                </div>
                             <?php else: ?>
-                            <div class="space-y-4">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Клієнт:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($selectedCustomer['name']) ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Товарів:</span>
-                                    <span class="font-medium"><?= count($selectedProducts) ?></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Підсумок:</span>
-                                    <span class="font-medium"><?= number_format($subtotal, 2) ?> ₴</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Доставка:</span>
-                                    <span class="font-medium"><?= number_format($shippingCost, 2) ?> ₴</span>
-                                </div>
-                                <div class="border-t pt-4 flex justify-between text-xl font-bold">
-                                    <span>Всього:</span>
-                                    <span class="text-green-600"><?= number_format($total, 2) ?> ₴</span>
+                                <div class="mb-4">
+                                    <table class="w-full text-gray-700">
+                                        <tr>
+                                            <td class="py-2">Кількість товарів:</td>
+                                            <td class="py-2 text-right">
+                                                <?php
+                                                $totalQuantity = 0;
+                                                foreach ($selectedProducts as $product) {
+                                                    $totalQuantity += $product['quantity'];
+                                                }
+                                                echo $totalQuantity;
+                                                ?>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2">Вартість товарів:</td>
+                                            <td class="py-2 text-right"><?= number_format($subtotal, 2) ?> ₴</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2">Вартість доставки:</td>
+                                            <td class="py-2 text-right"><?= number_format($shippingCost, 2) ?> ₴</td>
+                                        </tr>
+                                        <tr class="border-t">
+                                            <td class="py-2 font-semibold">Загальна сума:</td>
+                                            <td class="py-2 text-right font-semibold"><?= number_format($total, 2) ?> ₴</td>
+                                        </tr>
+                                    </table>
                                 </div>
                                 
-                                <?php if (!empty($selectedProducts)): ?>
-                                <button type="submit" form="order-form" name="create_order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded font-medium mt-6">
-                                    <i class="fas fa-check mr-2"></i> Створити замовлення
-                                </button>
-                                <?php else: ?>
-                                <button disabled class="w-full bg-gray-400 text-white py-3 px-4 rounded font-medium mt-6 cursor-not-allowed">
-                                    <i class="fas fa-check mr-2"></i> Створити замовлення
-                                </button>
-                                <p class="text-sm text-gray-500 text-center mt-2">Додайте товари для створення замовлення</p>
-                                <?php endif; ?>
-                                </form>
-                            </div>
+                                <div>
+                                    <button type="submit" form="order-form" name="create_order" class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium <?= empty($selectedProducts) ? 'opacity-50 cursor-not-allowed' : '' ?>" <?= empty($selectedProducts) ? 'disabled' : '' ?>>
+                                        <i class="fas fa-check-circle mr-2"></i> Оформити замовлення
+                                    </button>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                </main>
+            </main>
         </div>
     </div>
 
+    <!-- JavaScript для функціональності сторінки -->
     <script>
-        // Обновление суммы при изменении количества товаров
-        document.addEventListener('DOMContentLoaded', function() {
-            const quantityInputs = document.querySelectorAll('input[type="number"][name^="quantities"]');
+        $(document).ready(function() {
+            let selectedProduct = null;
             
-            quantityInputs.forEach(input => {
-                input.addEventListener('change', function() {
-                    const productId = this.name.match(/\[(\d+)\]/)[1];
-                    const row = this.closest('tr');
-                    const priceCell = row.querySelector('td:nth-child(2)');
-                    const totalCell = row.querySelector('td:nth-child(4)');
-                    
-                    const price = parseFloat(priceCell.textContent.replace(/[^\d.]/g, ''));
-                    const quantity = parseInt(this.value);
-                    
-                    const total = price * quantity;
-                    totalCell.textContent = total.toFixed(2) + ' ₴';
+            // Функція автозаповнення пошуку товарів
+            $("#product_search").autocomplete({
+                source: function(request, response) {
+                    const category = $("#product_category").val();
+                    $.ajax({
+                        url: "new_order.php",
+                        dataType: "json",
+                        data: {
+                            ajax_search_products: 1,
+                            term: request.term,
+                            category: category
+                        },
+                        success: function(data) {
+                            response($.map(data, function(item) {
+                                return {
+                                    label: item.name,
+                                    value: item.name,
+                                    item: item
+                                };
+                            }));
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    showSelectedProduct(ui.item.item);
+                    return false;
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append("<div class='product-item'>" +
+                        "<img src='http://winery_sales.loc/assets/images\/" + item.item.image + "' alt='" + item.item.name + "'>" +
+                        "<div class='product-item-details'>" +
+                        "<div class='product-item-name'>" + item.item.name + "</div>" +
+                        "<div class='product-item-price'>" + item.item.price + " ₴</div>" +
+                        "<div class='product-item-stock'>В наявності: " + item.item.stock_quantity + "</div>" +
+                        "</div>" +
+                        "</div>")
+                    .appendTo(ul);
+            };
+            
+            // Відображення обраного товару перед додаванням до списку
+            function showSelectedProduct(product) {
+                selectedProduct = product;
+                
+                $("#selected_product_id").val(product.id);
+                $("#selected_product_name").text(product.name);
+                $("#selected_product_price").text(product.price + " ₴");
+                $("#selected_product_image").attr("src", "http://winery_sales.loc/assets/images\/" + product.image);
+                $("#selected_product_stock").text("В наявності: " + product.stock_quantity);
+                $("#selected_product_max").val(product.stock_quantity);
+                $("#selected_product_quantity").attr("max", product.stock_quantity);
+                $("#selected_product_quantity").val(1);
+                
+                $("#selected_product_container").removeClass("hidden");
+                $("#product_search").val("");
+            }
+            
+            // Скасування вибору товару
+            $("#cancel_selected_product").click(function() {
+                $("#selected_product_container").addClass("hidden");
+                selectedProduct = null;
+            });
+            
+            // Додавання товару до замовлення через AJAX
+            $("#add_selected_product").click(function() {
+                if (!selectedProduct) return;
+                
+                const productId = $("#selected_product_id").val();
+                const quantity = parseInt($("#selected_product_quantity").val());
+                
+                $.ajax({
+                    url: "new_order.php",
+                    method: "POST",
+                    dataType: "json",
+                    data: {
+                        ajax_add_product: 1,
+                        product_id: productId,
+                        quantity: quantity
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Оновлюємо сторінку після успішного додавання
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert("Помилка при додаванні товару до замовлення");
+                    }
                 });
+            });
+            
+            // Оновлення вартості доставки в підсумку
+            $("#shipping_cost").on("input", function() {
+                const shippingCost = parseFloat($(this).val()) || 0;
+                const subtotal = <?= $subtotal ?>;
+                const total = subtotal + shippingCost;
+                
+                // Оновлюємо підсумок
+                $("td:contains('Вартість доставки:')").next().text(shippingCost.toFixed(2) + " ₴");
+                $("td:contains('Загальна сума:')").next().text(total.toFixed(2) + " ₴");
+            });
+            
+            // Фільтрація за категорією при зміні категорії
+            $("#product_category").change(function() {
+                if ($("#product_search").val().length >= 2) {
+                    $("#product_search").autocomplete("search");
+                }
             });
         });
     </script>
 </body>
 </html>
-                

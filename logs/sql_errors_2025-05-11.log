@@ -1,0 +1,54 @@
+[2025-05-11 19:27:27] [ERROR] SQL Error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '))
+                          GROUP BY p.id, p.name, p.image, p.price, pc.nam...' at line 6
+Query: SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+                          FROM products p
+                          JOIN product_categories pc ON p.category_id = pc.id
+                          LEFT JOIN order_items oi ON p.id = oi.product_id
+                          WHERE p.status = 'active'
+                          AND (p.id NOT IN ())
+                          GROUP BY p.id, p.name, p.image, p.price, pc.name
+                          ORDER BY COUNT(oi.id) DESC
+                          LIMIT ?
+Params: [4]
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(54): PDOStatement->execute()
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(637): Database->select('SELECT DISTINCT...', Array)
+#2 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(675): CustomerController->getRecommendedProducts('4', 4)
+#3 D:\diploms-2025\wine_sales_automation\views\account\index.php(21): CustomerController->getCustomerDashboard('4')
+#4 {main}
+[2025-05-11 19:44:10] [ERROR] SQL Error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '))
+                          GROUP BY p.id, p.name, p.image, p.price, pc.nam...' at line 6
+Query: SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+                          FROM products p
+                          JOIN product_categories pc ON p.category_id = pc.id
+                          LEFT JOIN order_items oi ON p.id = oi.product_id
+                          WHERE p.status = 'active'
+                          AND (p.id NOT IN ())
+                          GROUP BY p.id, p.name, p.image, p.price, pc.name
+                          ORDER BY COUNT(oi.id) DESC
+                          LIMIT ?
+Params: [4]
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(54): PDOStatement->execute()
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(637): Database->select('SELECT DISTINCT...', Array)
+#2 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(675): CustomerController->getRecommendedProducts('4', 4)
+#3 D:\diploms-2025\wine_sales_automation\views\account\index.php(21): CustomerController->getCustomerDashboard('4')
+#4 {main}
+[2025-05-11 19:44:17] [ERROR] SQL Error: SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '))
+                          GROUP BY p.id, p.name, p.image, p.price, pc.nam...' at line 6
+Query: SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+                          FROM products p
+                          JOIN product_categories pc ON p.category_id = pc.id
+                          LEFT JOIN order_items oi ON p.id = oi.product_id
+                          WHERE p.status = 'active'
+                          AND (p.id NOT IN ())
+                          GROUP BY p.id, p.name, p.image, p.price, pc.name
+                          ORDER BY COUNT(oi.id) DESC
+                          LIMIT ?
+Params: [4]
+Stack trace: 
+#0 D:\diploms-2025\wine_sales_automation\config\database.php(54): PDOStatement->execute()
+#1 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(637): Database->select('SELECT DISTINCT...', Array)
+#2 D:\diploms-2025\wine_sales_automation\controllers\CustomerController.php(675): CustomerController->getRecommendedProducts('4', 4)
+#3 D:\diploms-2025\wine_sales_automation\views\account\index.php(21): CustomerController->getCustomerDashboard('4')
+#4 {main}

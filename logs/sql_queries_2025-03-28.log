@@ -1,0 +1,112 @@
+[2025-03-28 10:48:19] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:19] [DEBUG] Query: SELECT ci.*, p.name, p.image, p.price, p.stock_quantity
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.session_id = ?
+Params: ["user_3"]
+[2025-03-28 10:48:19] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:19] [DEBUG] Query: SELECT o.*, 
+                      u.name as customer_name, u.email as customer_email, 
+                      u.phone as customer_phone, u.address as customer_address,
+                      u.city as customer_city, u.region as customer_region,
+                      u.postal_code as customer_postal_code,
+                      m.name as manager_name
+                      FROM orders o
+                      LEFT JOIN users u ON o.customer_id = u.id
+                      LEFT JOIN users m ON o.sales_manager_id = m.id
+                      WHERE o.id = ?
+Params: [7]
+[2025-03-28 10:48:19] [DEBUG] Query: SELECT oi.*, p.name as product_name, p.image, p.price as current_price,
+                      pc.name as category_name
+                      FROM order_items oi
+                      JOIN products p ON oi.product_id = p.id
+                      JOIN product_categories pc ON p.category_id = pc.id
+                      WHERE oi.order_id = ?
+Params: [7]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT ci.*, p.name, p.image, p.price, p.stock_quantity
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.session_id = ?
+Params: ["user_3"]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT o.*, 
+                      u.name as customer_name, u.email as customer_email, 
+                      u.phone as customer_phone, u.address as customer_address,
+                      u.city as customer_city, u.region as customer_region,
+                      u.postal_code as customer_postal_code,
+                      m.name as manager_name
+                      FROM orders o
+                      LEFT JOIN users u ON o.customer_id = u.id
+                      LEFT JOIN users m ON o.sales_manager_id = m.id
+                      WHERE o.id = ?
+Params: [7]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT oi.*, p.name as product_name, p.image, p.price as current_price,
+                      pc.name as category_name
+                      FROM order_items oi
+                      JOIN products p ON oi.product_id = p.id
+                      JOIN product_categories pc ON p.category_id = pc.id
+                      WHERE oi.order_id = ?
+Params: [7]
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT COUNT(*) as total FROM (SELECT u.*, 
+                (SELECT COUNT(*) FROM orders WHERE customer_id = u.id) as order_count,
+                (SELECT SUM(total_amount) FROM orders WHERE customer_id = u.id) as total_spent,
+                (SELECT MAX(created_at) FROM orders WHERE customer_id = u.id) as last_order_date
+                FROM users u
+                WHERE u.role = 'customer'
+                ORDER BY order_count DESC, u.name) as count_query
+Params: []
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT u.*, 
+                (SELECT COUNT(*) FROM orders WHERE customer_id = u.id) as order_count,
+                (SELECT SUM(total_amount) FROM orders WHERE customer_id = u.id) as total_spent,
+                (SELECT MAX(created_at) FROM orders WHERE customer_id = u.id) as last_order_date
+                FROM users u
+                WHERE u.role = 'customer'
+                ORDER BY order_count DESC, u.name LIMIT 0, 1000
+Params: []
+[2025-03-28 10:48:25] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT ci.*, p.name, p.image, p.price, p.stock_quantity
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.session_id = ?
+Params: ["user_3"]
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT * FROM users WHERE id = ?
+Params: ["3"]
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT ci.*, p.name, p.image, p.price, p.stock_quantity
+                FROM cart_items ci
+                JOIN products p ON ci.product_id = p.id
+                WHERE ci.session_id = ?
+Params: ["user_3"]
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT * FROM product_categories ORDER BY name
+Params: []
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT COUNT(*) as total FROM (SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.status = 'active'
+             ORDER BY p.name ASC) as count_query
+Params: []
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.status = 'active'
+             ORDER BY p.name ASC LIMIT 0, 12
+Params: []
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT * FROM promotions 
+                 WHERE status = 'active' 
+                 AND (NOW() BETWEEN start_date AND end_date)
+                 ORDER BY min_order_amount DESC
+Params: []
+[2025-03-28 10:48:30] [DEBUG] Query: SELECT p.*, pc.name as category_name 
+             FROM products p 
+             JOIN product_categories pc ON p.category_id = pc.id 
+             WHERE p.featured = 1 AND p.status = 'active'
+             ORDER BY p.name
+             LIMIT ?
+Params: [4]

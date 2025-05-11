@@ -186,7 +186,7 @@ $dashboardData = $salesController->getDashboardData($currentUser['id']);
                                         <td class="px-4 py-2 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-10 w-10">
-                                                    <img class="h-10 w-10 rounded-full" src="../assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                                                    <img class="h-10 w-10 rounded-full" src="http://winery_sales.loc/assets/images/<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                                                 </div>
                                                 <div class="ml-4">
                                                     <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>

@@ -1,0 +1,15 @@
+[2025-03-26 23:26:22] Uncaught Exception: Call to undefined method CustomerController::getCustomerDetails()
+File: D:\diploms-2025\wine_sales_automation\views\sales\print_order.php on line 50
+Stack trace: 
+#0 {main}
+
+[2025-03-26 23:26:48] Uncaught Exception: Call to undefined method SalesController::getCustomerById()
+File: D:\diploms-2025\wine_sales_automation\views\sales\print_order.php on line 50
+Stack trace: 
+#0 {main}
+
+[2025-03-26 23:26:56] Uncaught Exception: Call to undefined method CustomerController::getCustomerDetails()
+File: D:\diploms-2025\wine_sales_automation\views\sales\print_order.php on line 50
+Stack trace: 
+#0 {main}
+
