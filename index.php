@@ -125,7 +125,7 @@ $featuredProducts = $customerController->getFeaturedProducts();
                 </a>
                 <?php if ($isLoggedIn): ?>
                 <div class="flex items-center space-x-2">
-                    <a href="views/<?= htmlspecialchars($currentUser['role']) ?>/index.php" class="hover:text-red-200"><?= htmlspecialchars($currentUser['name']) ?></a>
+                    <a href="views/<?= htmlspecialchars(($currentUser['role'] !== 'customer' ?: 'account')) ?>/index.php" class="hover:text-red-200"><?= htmlspecialchars($currentUser['name']) ?></a>
                     <span>|</span>
                     <a href="logout.php" class="hover:text-red-200">Вихід</a>
                 </div>

@@ -75,7 +75,7 @@ function renderOrderStatus($status) {
     <header class="bg-red-800 text-white">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center">
-                <a href="../index.php" class="font-bold text-2xl">Винна крамниця</a>
+                <a href="../../index.php" class="font-bold text-2xl">Винна крамниця</a>
             </div>
             <div class="flex items-center space-x-4">
                 <a href="../index.php" class="hover:text-red-200">Каталог</a>

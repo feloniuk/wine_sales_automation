@@ -70,12 +70,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <header class="bg-red-800 text-white">
         <div class="container mx-auto px-4 py-3 flex items-center justify-between">
             <div class="flex items-center">
-                <a href="../index.php" class="font-bold text-2xl">Винна крамниця</a>
+                <a href="../../index.php" class="font-bold text-2xl">Винна крамниця</a>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="../index.php" class="hover:text-red-200">Каталог</a>
+                <a href="../../index.php" class="hover:text-red-200">Каталог</a>
                 <a href="index.php" class="bg-red-700 px-3 py-1 rounded-lg hover:bg-red-600">Кабінет</a>
-                <a href="../cart.php" class="relative">
+                <a href="../../cart.php" class="relative">
                     <i class="fas fa-shopping-cart text-xl"></i>
                     <span class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs cart-count">0</span>
                 </a>

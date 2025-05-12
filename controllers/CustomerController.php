@@ -597,50 +597,69 @@ public function searchProducts($keyword, $page = 1, $perPage = ITEMS_PER_PAGE, $
     }
 
     // Отримання рекомендованих товарів для клієнта
-    public function getRecommendedProducts($customerId, $limit = 6) {
-        // На основі попередніх замовлень та категорій
-        $query = "SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
-                FROM products p
-                JOIN product_categories pc ON p.category_id = pc.id
-                WHERE p.category_id IN (
-                    SELECT DISTINCT p2.category_id
-                    FROM orders o
-                    JOIN order_items oi ON o.id = oi.order_id
-                    JOIN products p2 ON oi.product_id = p2.id
-                    WHERE o.customer_id = ?
-                )
-                AND p.id NOT IN (
-                    SELECT oi.product_id
-                    FROM orders o
-                    JOIN order_items oi ON o.id = oi.order_id
-                    WHERE o.customer_id = ?
-                )
-                AND p.status = 'active'
-                LIMIT ?";
+public function getRecommendedProducts($customerId, $limit = 6) {
+    // Check if customer has any previous orders first
+    $checkOrdersQuery = "SELECT COUNT(*) as count FROM orders WHERE customer_id = ?";
+    $orderCount = $this->db->selectOne($checkOrdersQuery, [$customerId]);
+    
+    if (!$orderCount || $orderCount['count'] == 0) {
+        // Customer has no orders yet, just return popular products
+        $popularQuery = "SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+                      FROM products p
+                      JOIN product_categories pc ON p.category_id = pc.id
+                      LEFT JOIN order_items oi ON p.id = oi.product_id
+                      WHERE p.status = 'active'
+                      GROUP BY p.id, p.name, p.image, p.price, pc.name
+                      ORDER BY COUNT(oi.id) DESC
+                      LIMIT ?";
         
-        $recommendedByHistory = $this->db->select($query, [$customerId, $customerId, $limit]);
-        
-        // Якщо нема історії замовлень або мало рекомендацій, додаємо популярні товари
-        if (count($recommendedByHistory) < $limit) {
-            $remainingLimit = $limit - count($recommendedByHistory);
-            
-            $popularQuery = "SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
-                          FROM products p
-                          JOIN product_categories pc ON p.category_id = pc.id
-                          LEFT JOIN order_items oi ON p.id = oi.product_id
-                          WHERE p.status = 'active'
-                          AND (p.id NOT IN (". implode(',', array_column($recommendedByHistory, 'id')) ."))
-                          GROUP BY p.id, p.name, p.image, p.price, pc.name
-                          ORDER BY COUNT(oi.id) DESC
-                          LIMIT ?";
-            
-            $popularProducts = $this->db->select($popularQuery, [$remainingLimit]);
-            
-            return array_merge($recommendedByHistory, $popularProducts);
-        }
-        
-        return $recommendedByHistory;
+        return $this->db->select($popularQuery, [$limit]) ?: [];
     }
+
+    // Original recommendations based on order history
+    $query = "SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+            FROM products p
+            JOIN product_categories pc ON p.category_id = pc.id
+            WHERE p.category_id IN (
+                SELECT DISTINCT p2.category_id
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                JOIN products p2 ON oi.product_id = p2.id
+                WHERE o.customer_id = ?
+            )
+            AND p.id NOT IN (
+                SELECT oi.product_id
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.order_id
+                WHERE o.customer_id = ?
+            )
+            AND p.status = 'active'
+            LIMIT ?";
+    
+    $recommendedByHistory = $this->db->select($query, [$customerId, $customerId, $limit]) ?: [];
+    
+    // If we don't have enough recommendations from history, add popular products
+    if (count($recommendedByHistory) < $limit) {
+        $remainingLimit = $limit - count($recommendedByHistory);
+        $existingIds = empty($recommendedByHistory) ? [-1] : array_column($recommendedByHistory, 'id');
+        
+        $popularQuery = "SELECT DISTINCT p.id, p.name, p.image, p.price, pc.name as category_name
+                      FROM products p
+                      JOIN product_categories pc ON p.category_id = pc.id
+                      LEFT JOIN order_items oi ON p.id = oi.product_id
+                      WHERE p.status = 'active'
+                      AND p.id NOT IN (" . implode(',', $existingIds) . ")
+                      GROUP BY p.id, p.name, p.image, p.price, pc.name
+                      ORDER BY COUNT(oi.id) DESC
+                      LIMIT ?";
+        
+        $popularProducts = $this->db->select($popularQuery, [$remainingLimit]) ?: [];
+        
+        return array_merge($recommendedByHistory, $popularProducts);
+    }
+    
+    return $recommendedByHistory;
+}
 
     // Отримання статистики для профілю клієнта
     public function getCustomerDashboard($customerId) {
