@@ -496,6 +496,76 @@ public function getDashboardData() {
     ];
 }
 
+// This should be added to the WarehouseController.php file
+public function performInventory($inventoryData) {
+    // Start a transaction
+    $this->db->beginTransaction();
+    
+    try {
+        foreach ($inventoryData as $item) {
+            // Get current stock
+            $productQuery = "SELECT id, name, stock_quantity FROM products WHERE id = ?";
+            $product = $this->db->selectOne($productQuery, [$item['product_id']]);
+            
+            if (!$product) {
+                continue; // Skip non-existent products
+            }
+            
+            $actualQuantity = intval($item['actual_quantity']);
+            $difference = $actualQuantity - $product['stock_quantity'];
+            
+            if ($difference !== 0) {
+                // Update product quantity
+                $updateQuery = "UPDATE products SET stock_quantity = ? WHERE id = ?";
+                $updateResult = $this->db->execute($updateQuery, [$actualQuantity, $item['product_id']]);
+                
+                if (!$updateResult) {
+                    throw new Exception('Error updating quantity for product ' . $product['name']);
+                }
+                
+                // Record adjustment transaction
+                $transactionType = $difference > 0 ? 'in' : 'out';
+                $quantity = abs($difference);
+                $notes = !empty($item['notes']) ? $item['notes'] : 'Inventory adjustment';
+                
+                $transactionQuery = "INSERT INTO inventory_transactions (
+                                    product_id, quantity, transaction_type, reference_type, 
+                                    notes, created_by
+                                ) VALUES (?, ?, ?, 'adjustment', ?, ?)";
+                
+                $transactionParams = [
+                    $item['product_id'],
+                    $quantity,
+                    $transactionType,
+                    $notes,
+                    $_SESSION['user_id'] ?? null
+                ];
+                
+                $transactionResult = $this->db->execute($transactionQuery, $transactionParams);
+                
+                if (!$transactionResult) {
+                    throw new Exception('Error recording transaction for product ' . $product['name']);
+                }
+            }
+        }
+        
+        // Commit the transaction
+        $this->db->commit();
+        return [
+            'success' => true,
+            'message' => 'Inventory successfully updated'
+        ];
+    }
+    catch (Exception $e) {
+        // Rollback the transaction in case of error
+        $this->db->rollBack();
+        return [
+            'success' => false,
+            'message' => $e->getMessage()
+        ];
+    }
+}
+
 // Метод для обработки заказа
 public function processOrder($orderId) {
     // Проверяем существование заказа
@@ -569,61 +639,5 @@ public function filterTransactions($type = null, $productId = null, $page = 1, $
     
     return $this->db->paginate($query, $params, $page, $perPage);
 }
-    // Проведення інвентаризації
-    public function performInventory($inventoryData) {
-        // Розпочинаємо транзакцію
-        $this->db->beginTransaction();
-        
-        try {
-            foreach ($inventoryData as $item) {
-                // Отримуємо поточний запас
-                $productQuery = "SELECT id, name, stock_quantity FROM products WHERE id = ?";
-                $product = $this->db->selectOne($productQuery, [$item['product_id']]);
-                
-                if (!$product) {
-                    continue; // Пропускаємо неіснуючі товари
-                }
-                
-                $actualQuantity = intval($item['actual_quantity']);
-                $difference = $actualQuantity - $product['stock_quantity'];
-                
-                if ($difference !== 0) {
-                    // Оновлюємо кількість товару
-                    $updateQuery = "UPDATE products SET stock_quantity = ? WHERE id = ?";
-                    $updateResult = $this->db->execute($updateQuery, [$actualQuantity, $item['product_id']]);
-                    
-                    if (!$updateResult) {
-                        throw new Exception('Помилка при оновленні кількості товару ' . $product['name']);
-                    }
-                    
-                    // Записуємо транзакцію корекції
-                    $transactionType = $difference > 0 ? 'in' : 'out';
-                    $quantity = abs($difference);
-                    
-                    $transactionQuery = "INSERT INTO inventory_transactions (
-                                        product_id, quantity, transaction_type, reference_type, 
-                                        notes, created_by
-                                    ) VALUES (?, ?, ?, 'adjustment', ?, ?)";
-                    
-                    $transactionParams = [
-                        $item['product_id'],
-                        $quantity,
-                        $transactionType,
-                        'Корекція під час інвентаризації: ' . $item['notes'],
-                        $_SESSION['user_id'] ?? null
-                    ];
-                    
-                    $transactionResult = $this->db->execute($transactionQuery, $transactionParams);
-                    
-                    if (!$transactionResult) {
-                        throw new Exception('Помилка при записі транзакції для товару ' . $product['name']);
-                    }
-                }
-            }
-        }
-        catch (Exception $e) {
-            $this->db->rollBack();
-            return ['success' => false, 'message' => $e->getMessage()];
-        }
-    }
+    
 }
