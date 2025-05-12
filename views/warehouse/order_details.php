@@ -299,7 +299,7 @@ $canCancel = in_array($order['status'], ['pending', 'processing']) && !$order['s
                                 <div class="w-24 flex-shrink-0 text-gray-500">Менеджер:</div>
                                 <div class="flex-1">
                                     <?php if ($order['sales_manager_id']): ?>
-                                        <?= htmlspecialchars($order['manager_name']) ?>
+                                        <?= htmlspecialchars($order['sales_manager_name']) ?>
                                     <?php else: ?>
                                         <span class="text-yellow-600">Не призначено</span>
                                     <?php endif; ?>
