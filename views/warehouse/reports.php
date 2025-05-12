@@ -263,360 +263,365 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                 
                 <!-- Відображення даних звіту -->
                 <div class="bg-white rounded-lg shadow overflow-hidden">
-                    <?php switch ($reportType): ?>
-                        <?php case 'inventory': ?>
-                            <!-- Звіт інвентаризації -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full">
-                                    <thead>
-                                        <tr class="bg-gray-50">
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категорія</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Мін. запас</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <?php foreach ($reportData as $product): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <?= $product['id'] ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-10 w-10">
-                                                        <img class="h-10 w-10 rounded-full object-cover" 
-                                                            src="../../assets/images/<?= $product['image'] ?>" 
-                                                            alt="<?= htmlspecialchars($product['name']) ?>">
-                                                    </div>
-                                                    <div class="ml-4">
-                                                        <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>
-                                                    </div>
+                <?php
+                switch ($reportType) {
+                    case 'inventory': 
+                    ?>
+                        <!-- Звіт інвентаризації -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категорія</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Мін. запас</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <?php foreach ($reportData as $product): ?>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= $product['id'] ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full object-cover" 
+                                                        src="../../assets/images/<?= $product['image'] ?>" 
+                                                        alt="<?= htmlspecialchars($product['name']) ?>">
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= htmlspecialchars($product['category_name']) ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <?= number_format($product['price'], 2) ?> ₴
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium <?= $product['stock_quantity'] <= $product['min_stock'] ? 'text-red-600' : 'text-green-600' ?>">
-                                                <?= $product['stock_quantity'] ?> шт.
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= $product['min_stock'] ?> шт.
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php if ($product['stock_quantity'] <= 0): ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                    Відсутній
-                                                </span>
-                                                <?php elseif ($product['stock_quantity'] <= $product['min_stock']): ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    Низький запас
-                                                </span>
-                                                <?php else: ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                    Достатній запас
-                                                </span>
-                                                <?php endif; ?>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <!-- Графік розподілу запасів за категоріями -->
-                            <div class="p-6 bg-gray-50 border-t">
-                                <h3 class="text-lg font-semibold mb-4">Розподіл запасів за категоріями</h3>
-                                <div class="h-64">
-                                    <canvas id="inventoryChart"></canvas>
-                                </div>
-                            </div>
-                            <?php break; ?>
-                            
-                        <?php case 'transactions': ?>
-                            <!-- Звіт транзакцій -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full">
-                                    <thead>
-                                        <tr class="bg-gray-50">
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Причина</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Користувач</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <?php foreach ($reportData as $transaction): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $transaction['id'] ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= date('d.m.Y H:i', strtotime($transaction['created_at'])) ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($transaction['product_name']) ?></div>
-                                                <div class="text-sm text-gray-500">ID: <?= $transaction['product_id'] ?></div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php if ($transaction['transaction_type'] === 'in'): ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                    Надходження
-                                                </span>
-                                                <?php else: ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                    Списання
-                                                </span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $transaction['quantity'] ?> шт.</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?php
-                                                switch ($transaction['reference_type']) {
-                                                    case 'production': echo 'Поставка від виробника'; break;
-                                                    case 'adjustment': echo 'Коригування запасів'; break;
-                                                    case 'return': echo 'Повернення'; break;
-                                                    case 'order': echo 'Замовлення #' . $transaction['reference_id']; break;
-                                                    default: echo $transaction['reference_type']; break;
-                                                }
-                                                ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($transaction['user_name'] ?? 'Система') ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                        <?php if (empty($reportData)): ?>
-                                        <tr>
-                                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                                                Немає транзакцій за обраний період
-                                            </td>
-                                        </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <!-- Графік транзакцій за період -->
-                            <div class="p-6 bg-gray-50 border-t">
-                                <h3 class="text-lg font-semibold mb-4">Транзакції за період</h3>
-                                <div class="h-64">
-                                    <canvas id="transactionsChart"></canvas>
-                                </div>
-                            </div>
-                            <?php break; ?>
-                            
-                        <?php case 'low_stock': ?>
-                            <!-- Звіт товарів з низьким запасом -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full">
-                                    <thead>
-                                        <tr class="bg-gray-50">
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категорія</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Мін. запас</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Різниця</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <?php if (empty($reportData)): ?>
-                                        <tr>
-                                            <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                                                Немає товарів з низьким запасом
-                                            </td>
-                                        </tr>
-                                        <?php else: ?>
-                                        <?php foreach ($reportData as $product): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <?= $product['id'] ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-10 w-10">
-                                                        <img class="h-10 w-10 rounded-full object-cover" 
-                                                            src="../../assets/images/<?= $product['image'] ?>" 
-                                                            alt="<?= htmlspecialchars($product['name']) ?>">
-                                                    </div>
-                                                    <div class="ml-4">
-                                                        <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>
-                                                    </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>
                                                 </div>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= htmlspecialchars($product['category_name']) ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <?= number_format($product['price'], 2) ?> ₴
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                                                <?= $product['stock_quantity'] ?> шт.
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= $product['min_stock'] ?> шт.
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                                                <?= $product['stock_quantity'] - $product['min_stock'] ?> шт.
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <a href="add_stock.php?id=<?= $product['id'] ?>" class="text-blue-600 hover:text-blue-900">
-                                                    <i class="fas fa-plus-circle mr-1"></i> Додати
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= htmlspecialchars($product['category_name']) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= number_format($product['price'], 2) ?> ₴
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium <?= $product['stock_quantity'] <= $product['min_stock'] ? 'text-red-600' : 'text-green-600' ?>">
+                                            <?= $product['stock_quantity'] ?> шт.
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= $product['min_stock'] ?> шт.
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php if ($product['stock_quantity'] <= 0): ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                Відсутній
+                                            </span>
+                                            <?php elseif ($product['stock_quantity'] <= $product['min_stock']): ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                Низький запас
+                                            </span>
+                                            <?php else: ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Достатній запас
+                                            </span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Графік розподілу запасів за категоріями -->
+                        <div class="p-6 bg-gray-50 border-t">
+                            <h3 class="text-lg font-semibold mb-4">Розподіл запасів за категоріями</h3>
+                            <div class="h-64">
+                                <canvas id="inventoryChart"></canvas>
                             </div>
-                            
-                            <!-- Графік товарів з низьким запасом -->
-                            <?php if (!empty($reportData)): ?>
-                            <div class="p-6 bg-gray-50 border-t">
-                                <h3 class="text-lg font-semibold mb-4">Товари з найнижчим запасом</h3>
-                                <div class="h-64">
-                                    <canvas id="lowStockChart"></canvas>
-                                </div>
+                        </div>
+                    <?php
+                        break;
+                    case 'transactions': 
+                    ?>
+                        <!-- Звіт транзакцій -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Тип</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Причина</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Користувач</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <?php foreach ($reportData as $transaction): ?>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $transaction['id'] ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= date('d.m.Y H:i', strtotime($transaction['created_at'])) ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($transaction['product_name']) ?></div>
+                                            <div class="text-sm text-gray-500">ID: <?= $transaction['product_id'] ?></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php if ($transaction['transaction_type'] === 'in'): ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Надходження
+                                            </span>
+                                            <?php else: ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                Списання
+                                            </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= $transaction['quantity'] ?> шт.</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?php
+                                            switch ($transaction['reference_type']) {
+                                                case 'production': echo 'Поставка від виробника'; break;
+                                                case 'adjustment': echo 'Коригування запасів'; break;
+                                                case 'return': echo 'Повернення'; break;
+                                                case 'order': echo 'Замовлення #' . $transaction['reference_id']; break;
+                                                default: echo $transaction['reference_type']; break;
+                                            }
+                                            ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?= htmlspecialchars($transaction['user_name'] ?? 'Система') ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    <?php if (empty($reportData)): ?>
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                            Немає транзакцій за обраний період
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Графік транзакцій за період -->
+                        <div class="p-6 bg-gray-50 border-t">
+                            <h3 class="text-lg font-semibold mb-4">Транзакції за період</h3>
+                            <div class="h-64">
+                                <canvas id="transactionsChart"></canvas>
                             </div>
-                            <?php endif; ?>
-                            <?php break; ?>
-                            
-                        <?php case 'orders': ?>
-                            <!-- Звіт замовлень -->
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full">
-                                    <thead>
-                                        <tr class="bg-gray-50">
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Клієнт</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Оплата</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товарів</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="bg-white divide-y divide-gray-200">
-                                        <?php if (empty($reportData)): ?>
-                                        <tr>
-                                            <td colspan="8" class="px-6 py-4 text-center text-gray-500">
-                                                Немає замовлень за обраний період
-                                            </td>
-                                        </tr>
-                                        <?php else: ?>
-                                        <?php foreach ($reportData as $order): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                #<?= $order['id'] ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= date('d.m.Y H:i', strtotime($order['created_at'])) ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($order['customer_name']) ?></div>
-                                                <?php if (isset($order['customer_phone'])): ?>
-                                                <div class="text-sm text-gray-500"><?= htmlspecialchars($order['customer_phone']) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php 
-                                                switch ($order['status']) {
-                                                    case 'pending':
-                                                        $statusClass = 'bg-yellow-100 text-yellow-800';
-                                                        $statusText = 'Нове';
-                                                        break;
-                                                    case 'processing':
-                                                        $statusClass = 'bg-blue-100 text-blue-800';
-                                                        $statusText = 'В обробці';
-                                                        break;
-                                                    case 'ready_for_pickup':
-                                                        $statusClass = 'bg-indigo-100 text-indigo-800';
-                                                        $statusText = 'Готове';
-                                                        break;
-                                                    case 'shipped':
-                                                        $statusClass = 'bg-purple-100 text-purple-800';
-                                                        $statusText = 'Відправлено';
-                                                        break;
-                                                    case 'delivered':
-                                                        $statusClass = 'bg-green-100 text-green-800';
-                                                        $statusText = 'Доставлено';
-                                                        break;
-                                                    case 'completed':
-                                                        $statusClass = 'bg-green-100 text-green-800';
-                                                        $statusText = 'Завершено';
-                                                        break;
-                                                    case 'cancelled':
-                                                        $statusClass = 'bg-red-100 text-red-800';
-                                                        $statusText = 'Скасовано';
-                                                        break;
-                                                    default:
-                                                        $statusClass = 'bg-gray-100 text-gray-800';
-                                                        $statusText = $order['status'];
-                                                        break;
-                                                }
-                                                ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $statusClass ?>">
-                                                    <?= $statusText ?>
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php 
-                                                switch ($order['payment_status']) {
-                                                    case 'paid':
-                                                        $paymentClass = 'bg-green-100 text-green-800';
-                                                        $paymentText = 'Оплачено';
-                                                        break;
-                                                    case 'pending':
-                                                        $paymentClass = 'bg-yellow-100 text-yellow-800';
-                                                        $paymentText = 'Очікується';
-                                                        break;
-                                                    default:
-                                                        $paymentClass = 'bg-gray-100 text-gray-800';
-                                                        $paymentText = $order['payment_status'];
-                                                        break;
-                                                }
-                                                ?>
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $paymentClass ?>">
-                                                    <?= $paymentText ?>
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                <?= isset($order['items_count']) ? $order['items_count'] : '-' ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                <?= number_format($order['total_amount'], 2) ?> ₴
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                <a href="order_details.php?id=<?= $order['id'] ?>" class="text-blue-600 hover:text-blue-900">
-                                                    <i class="fas fa-eye"></i> Деталі
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
+                        </div>
+                    <?php
+                        break;
+                    case 'low_stock': 
+                    ?>
+                        <!-- Звіт товарів з низьким запасом -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товар</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Категорія</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ціна</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Кількість</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Мін. запас</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Різниця</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <?php if (empty($reportData)): ?>
+                                    <tr>
+                                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                            Немає товарів з низьким запасом
+                                        </td>
+                                    </tr>
+                                    <?php else: ?>
+                                    <?php foreach ($reportData as $product): ?>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= $product['id'] ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-full object-cover" 
+                                                        src="../../assets/images/<?= $product['image'] ?>" 
+                                                        alt="<?= htmlspecialchars($product['name']) ?>">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($product['name']) ?></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= htmlspecialchars($product['category_name']) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= number_format($product['price'], 2) ?> ₴
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                                            <?= $product['stock_quantity'] ?> шт.
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= $product['min_stock'] ?> шт.
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                                            <?= $product['stock_quantity'] - $product['min_stock'] ?> шт.
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="add_stock.php?id=<?= $product['id'] ?>" class="text-blue-600 hover:text-blue-900">
+                                                <i class="fas fa-plus-circle mr-1"></i> Додати
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Графік товарів з низьким запасом -->
+                        <?php if (!empty($reportData)): ?>
+                        <div class="p-6 bg-gray-50 border-t">
+                            <h3 class="text-lg font-semibold mb-4">Товари з найнижчим запасом</h3>
+                            <div class="h-64">
+                                <canvas id="lowStockChart"></canvas>
                             </div>
-                            
-                            <!-- Графік замовлень за період -->
-                            <?php if (!empty($reportData)): ?>
-                            <div class="p-6 bg-gray-50 border-t">
-                                <h3 class="text-lg font-semibold mb-4">Замовлення за період</h3>
-                                <div class="h-64">
-                                    <canvas id="ordersChart"></canvas>
-                                </div>
+                        </div>
+                        <?php endif; ?>
+                    <?php
+                        break;
+                    case 'orders': 
+                    ?>
+                        <!-- Звіт замовлень -->
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дата</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Клієнт</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Статус</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Оплата</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Товарів</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Сума</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Дії</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <?php if (empty($reportData)): ?>
+                                    <tr>
+                                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                            Немає замовлень за обраний період
+                                        </td>
+                                    </tr>
+                                    <?php else: ?>
+                                    <?php foreach ($reportData as $order): ?>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            #<?= $order['id'] ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= date('d.m.Y H:i', strtotime($order['created_at'])) ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($order['customer_name']) ?></div>
+                                            <?php if (isset($order['customer_phone'])): ?>
+                                            <div class="text-sm text-gray-500"><?= htmlspecialchars($order['customer_phone']) ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php 
+                                            $statusClass = 'bg-gray-100 text-gray-800';
+                                            $statusText = $order['status'];
+                                            
+                                            switch ($order['status']) {
+                                                case 'pending':
+                                                    $statusClass = 'bg-yellow-100 text-yellow-800';
+                                                    $statusText = 'Нове';
+                                                    break;
+                                                case 'processing':
+                                                    $statusClass = 'bg-blue-100 text-blue-800';
+                                                    $statusText = 'В обробці';
+                                                    break;
+                                                case 'ready_for_pickup':
+                                                    $statusClass = 'bg-indigo-100 text-indigo-800';
+                                                    $statusText = 'Готове';
+                                                    break;
+                                                case 'shipped':
+                                                    $statusClass = 'bg-purple-100 text-purple-800';
+                                                    $statusText = 'Відправлено';
+                                                    break;
+                                                case 'delivered':
+                                                    $statusClass = 'bg-green-100 text-green-800';
+                                                    $statusText = 'Доставлено';
+                                                    break;
+                                                case 'completed':
+                                                    $statusClass = 'bg-green-100 text-green-800';
+                                                    $statusText = 'Завершено';
+                                                    break;
+                                                case 'cancelled':
+                                                    $statusClass = 'bg-red-100 text-red-800';
+                                                    $statusText = 'Скасовано';
+                                                    break;
+                                            }
+                                            ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $statusClass ?>">
+                                                <?= $statusText ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php 
+                                            $paymentClass = 'bg-gray-100 text-gray-800';
+                                            $paymentText = $order['payment_status'];
+                                            
+                                            switch ($order['payment_status']) {
+                                                case 'paid':
+                                                    $paymentClass = 'bg-green-100 text-green-800';
+                                                    $paymentText = 'Оплачено';
+                                                    break;
+                                                case 'pending':
+                                                    $paymentClass = 'bg-yellow-100 text-yellow-800';
+                                                    $paymentText = 'Очікується';
+                                                    break;
+                                            }
+                                            ?>
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <?= $paymentClass ?>">
+                                                <?= $paymentText ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <?= isset($order['items_count']) ? $order['items_count'] : '-' ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <?= number_format($order['total_amount'], 2) ?> ₴
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="order_details.php?id=<?= $order['id'] ?>" class="text-blue-600 hover:text-blue-900">
+                                                <i class="fas fa-eye"></i> Деталі
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Графік замовлень за період -->
+                        <?php if (!empty($reportData)): ?>
+                        <div class="p-6 bg-gray-50 border-t">
+                            <h3 class="text-lg font-semibold mb-4">Замовлення за період</h3>
+                            <div class="h-64">
+                                <canvas id="ordersChart"></canvas>
                             </div>
-                            <?php endif; ?>
-                            <?php break; ?>
-                    <?php endswitch; ?>
+                        </div>
+                        <?php endif; ?>
+                    <?php
+                        break;
+                }
+                ?>
                 </div>
             </main>
         </div>
