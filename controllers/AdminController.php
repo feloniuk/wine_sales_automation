@@ -36,6 +36,8 @@ class AdminController {
         ];
     }
 
+    
+
     // Отримання статистики по продуктах
     public function getProductStatistics() {
         $query = "SELECT 
@@ -335,6 +337,7 @@ class AdminController {
     public function getTopSellingProducts($limit = 5) {
         $query = "SELECT p.id, p.name, p.image, p.price, pc.name as category_name,
                 SUM(oi.quantity) as total_sold,
+                SUM(o.total_amount) as total_sales,
                 COUNT(DISTINCT o.id) as order_count
                 FROM products p
                 JOIN order_items oi ON p.id = oi.product_id
