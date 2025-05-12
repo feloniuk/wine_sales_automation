@@ -50,7 +50,7 @@ if (!empty($search)) {
     $title = 'Результати пошуку: ' . htmlspecialchars($search);
 } elseif ($categoryId > 0) {
     // Товари конкретної категорії
-    $productsData = $customerController->getProductsByCategory($categoryId, $page, $perPage);
+    $productsData = $customerController->getProductsByCategory($categoryId, $page, $perPage, $sort);
     
     // Знаходимо назву категорії
     $categoryName = '';
